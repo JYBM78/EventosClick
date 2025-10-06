@@ -29,6 +29,8 @@ import java.util.Map;
 
 @Service
 public class EmailServicioImpl implements EmailServicio {
+    private final String correo = "eventosclickuni@gmail.com";
+    private final String contra = "qyor yzrc eigg zdcg";
 
     @Override
     @Async
@@ -36,7 +38,7 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         Email email = EmailBuilder.startingBlank()
-                .from("unieventosfae@gmail.com")
+                .from(correo)
                 .to(emailDTO.destinatario())
                 .withSubject(emailDTO.asunto())
                 .withPlainText(emailDTO.cuerpo())
@@ -48,7 +50,7 @@ public class EmailServicioImpl implements EmailServicio {
         //fae12345
         //clave de aplicación: yygy ngcd lulw oxjk
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, "unieventosfae@gmail.com", "yygy ngcd lulw oxjk")
+                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -65,7 +67,7 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         Email email = EmailBuilder.startingBlank()
-                .from("unieventosfae@gmail.com")
+                .from(correo)
                 .to(emailDTO.destinatario())
                 .withSubject(emailDTO.asunto())
                 .appendTextHTML(emailDTO.cuerpo())
@@ -73,11 +75,8 @@ public class EmailServicioImpl implements EmailServicio {
                 .buildEmail();
 
 
-        //unieventosfae@gmail.com
-        //fae12345
-        //clave de aplicación: yygy ngcd lulw oxjk
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, "unieventosfae@gmail.com", "yygy ngcd lulw oxjk")
+                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -109,7 +108,7 @@ public class EmailServicioImpl implements EmailServicio {
 
         // Enviar el correo
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, "unieventosfae@gmail.com", "yygy ngcd lulw oxjk")
+                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {

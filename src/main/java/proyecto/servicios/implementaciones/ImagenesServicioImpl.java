@@ -46,7 +46,7 @@ public class ImagenesServicioImpl implements ImagenesServicio {
         }
 
         File file = convertir(imagen);
-        Map uploadResult = cloudinary.uploader().upload(file, ObjectUtils.asMap("folder", "proyecto"));
+        Map uploadResult = cloudinary.uploader().upload(file, ObjectUtils.asMap("folder", "eventosClick"));
 
         Map<String, String> resultado = new HashMap<>();
         resultado.put("url", (String) uploadResult.get("secure_url"));
