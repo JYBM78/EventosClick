@@ -1,8 +1,9 @@
 package proyecto.modelo.dto.evento;
 
-import co.edu.uniquindio.proyecto.modelo.dto.imagenDTO;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import proyecto.modelo.dto.imagenDTO;
 
 import java.time.LocalDate;
 

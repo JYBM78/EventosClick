@@ -1,6 +1,8 @@
 package proyecto.modelo.dto.orden;
 
-import co.edu.uniquindio.proyecto.modelo.vo.DetalleOrden;
+
+
+import proyecto.modelo.vo.DetalleOrden;
 
 import java.time.LocalDate;
 import java.util.List;

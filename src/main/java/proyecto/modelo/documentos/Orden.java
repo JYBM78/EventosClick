@@ -1,10 +1,11 @@
 package proyecto.modelo.documentos;
 
-import co.edu.uniquindio.proyecto.modelo.vo.DetalleOrden;
-import co.edu.uniquindio.proyecto.modelo.vo.Pago;
+
 import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import proyecto.modelo.vo.DetalleOrden;
+import proyecto.modelo.vo.Pago;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

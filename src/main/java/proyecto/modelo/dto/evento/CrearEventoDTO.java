@@ -1,11 +1,12 @@
 package proyecto.modelo.dto.evento;
 
-import co.edu.uniquindio.proyecto.modelo.dto.imagenDTO;
-import co.edu.uniquindio.proyecto.modelo.enums.TipoEvento;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
+import proyecto.modelo.dto.imagenDTO;
+import proyecto.modelo.enums.TipoEvento;
 
 import java.time.LocalDate;
 import java.util.List;

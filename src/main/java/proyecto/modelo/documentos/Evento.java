@@ -1,11 +1,11 @@
 package proyecto.modelo.documentos;
 
-import co.edu.uniquindio.proyecto.modelo.enums.EstadoEvento;
-import co.edu.uniquindio.proyecto.modelo.enums.TipoEvento;
-import co.edu.uniquindio.proyecto.modelo.vo.Localidad;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import proyecto.modelo.enums.EstadoEvento;
+import proyecto.modelo.enums.TipoEvento;
+import proyecto.modelo.vo.Localidad;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
