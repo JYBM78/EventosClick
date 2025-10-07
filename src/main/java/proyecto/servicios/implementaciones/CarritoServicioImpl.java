@@ -34,23 +34,39 @@ public class CarritoServicioImpl implements CarritoServicio {
     public String eliminarItem(String idCarrito, String idDetalleCarrito) throws Exception {
 
         Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
-
-        if(carrito.isPresent()){
-            Optional<DetalleCarrito> detalleCarrito = carrito.get().getItems().stream().filter(x -> x.getIdDetalleCarrito().equals(idDetalleCarrito) ).findFirst();
-            if(detalleCarrito.isPresent()){
-                carrito.get().getItems().remove(detalleCarrito.get());
-                carritoRepo.save(carrito.get());
-                return "Item eliminado correctamente";
-            }
+        if (carrito.isEmpty()) {
+            throw new Exception("Carrito no encontrado");
         }
-        return "Item no ha sido eliminado correctamente";
+        Optional<DetalleCarrito> detalleCarrito = carrito.get().getItems().stream()
+                .filter(x -> x.getIdDetalleCarrito().equals(idDetalleCarrito))
+                .findFirst();
+
+        if (detalleCarrito.isEmpty()) {
+            throw new Exception("Detalle del carrito no encontrado");
+        }
+        carrito.get().getItems().remove(detalleCarrito.get());
+        carritoRepo.save(carrito.get());
+        return "Item eliminado correctamente";
     }
+
+    //    public String eliminarItem(String idCarrito, String idDetalleCarrito) throws Exception {
+//
+//        Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
+//
+//        if(carrito.isPresent()){
+//            Optional<DetalleCarrito> detalleCarrito = carrito.get().getItems().stream().filter(x -> x.getIdDetalleCarrito().equals(idDetalleCarrito) ).findFirst();
+//            if(detalleCarrito.isPresent()){
+//                carrito.get().getItems().remove(detalleCarrito.get());
+//                carritoRepo.save(carrito.get());
+//
+//                return "Item eliminado correctamente";
+//            }
+//        }
+//        return "Item no ha sido eliminado correctamente";
+//    }
     @Override
     public void agregarItem(String idCarrito, DetalleCarritoDTO item) throws Exception {
-        //System.out.println(idCarrito);
        Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
-
-
 
         if(carrito.isPresent()){
             Carrito carritoActual = carrito.get();
@@ -102,8 +118,6 @@ public class CarritoServicioImpl implements CarritoServicio {
                 detalleCarrito.setIdEvento(item.idEvento());
                 detalleCarrito.setNombreLocalidad(item.nombreLocalidad());
                 detalleCarrito.setPrecioUnitario(item.precioUnitario());
-
-
                 carritoActual.getItems().add(detalleCarrito);
             }
             // Guardar el carrito actualizado en la base de datos
