@@ -31,10 +31,6 @@ public class GeneralControlador {
     private final OrdenServicioImpl ordenServicio;
 
 
-
-
-
-
     @PostMapping("/notificacion-pago")
     public void recibirNotificacionMercadoPago(@RequestBody Map<String, Object> requestBody) {
         ordenServicio.recibirNotificacionMercadoPago(requestBody);

@@ -4,6 +4,7 @@ public record DetalleCarritoDTO(
         String idDetalleCarrito,
         String idEvento,
         int cantidad,
-        String nombreLocalidad
+        String nombreLocalidad,
+        float precioUnitario
 ) {
 }

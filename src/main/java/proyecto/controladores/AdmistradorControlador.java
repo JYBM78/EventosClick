@@ -41,9 +41,6 @@ public class AdmistradorControlador {
         Evento evento = eventoServicio.obtenerEvento(id);
         return ResponseEntity.ok(new MensajeDTO<>(false, evento));
     }
-
-
-
     @GetMapping("/obtener-ordenes-orden")
     public ResponseEntity<MensajeDTO<List<InformacionOrdenDTO>>> buscarOrdenes() throws Exception {
         List<InformacionOrdenDTO> ordenesCliente = ordenServicio.listarTodasLasOrdenes();
