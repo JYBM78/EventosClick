@@ -122,6 +122,8 @@ public class CarritoServicioImpl implements CarritoServicio {
             }
             // Guardar el carrito actualizado en la base de datos
             carritoRepo.save(carrito.get());
+        }else{
+            throw new Exception("Carrito no encontrado");
         }
     }
 

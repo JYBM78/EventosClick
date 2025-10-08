@@ -46,9 +46,9 @@ public class EmailServicioImpl implements EmailServicio {
                 .buildEmail();
 
 
-        //unieventosfae@gmail.com
-        //fae12345
-        //clave de aplicación: yygy ngcd lulw oxjk
+        //eventosclickuni@gmail.com
+        //Hola123?
+        //clave de aplicación: qyor yzrc eigg zdcg
         try (Mailer mailer = MailerBuilder
                 .withSMTPServer("smtp.gmail.com", 587, correo, contra)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)

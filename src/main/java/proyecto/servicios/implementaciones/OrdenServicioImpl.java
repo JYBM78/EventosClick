@@ -226,8 +226,6 @@ public class OrdenServicioImpl implements OrdenServicio {
                 orden.getFecha(),
                 orden.getTotal(),
                 orden.getItems()
-
-
         );
     }
 
@@ -424,7 +422,4 @@ public class OrdenServicioImpl implements OrdenServicio {
                 ))
                 .collect(Collectors.toList());
     }
-
-
-
 }
