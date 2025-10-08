@@ -5,10 +5,12 @@ import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
+import com.mercadopago.client.preference.PreferencePayerRequest;
 import com.mercadopago.client.preference.PreferenceItemRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
+import com.mercadopago.resources.preference.PreferencePayer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -292,13 +294,22 @@ public class OrdenServicioImpl implements OrdenServicio {
 
 
         // Configurar las credenciales de MercadoPago
-        MercadoPagoConfig.setAccessToken("TEST-588868403287290-100616-0e528ecb48f60cebab6692df2b492cec-1615533331");
+        MercadoPagoConfig.setAccessToken("APP_USR-5411335358313717-100712-ffe7d21472d9eb2733d13ab9a0cdc24e-2028101571");
+        //MercadoPagoConfig.setAccessToken("TEST-2041365706896992-100723-da66d1c65e7a6589364b7bcf2117e10a-1615533331");
 
+
+        // 👤 Configurar el comprador (payer)
+        PreferencePayerRequest payer = PreferencePayerRequest.builder()
+                .name("Comprador")
+                .surname("Sandbox")
+                .email("test_user_4853470745469862009@testuser.com") // 👈 Usa el correo de tu usuario sandbox comprador
+                .build();
 
         // Configurar las urls de retorno de la pasarela (Frontend)
         PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                .success("https://front-eventoClick-uq.web.app/pago-exitoso")
-                .failure("https://front-eventoClick-uq.web.app/pago-fallido")
+                .success("https://www.tu-sitio/success")
+                //.success("https://front-eventoClick-uq.web.app/pago-exitoso")
+                .failure("https://www.tu-sitio/failure")
                 .pending("https://front-eventoClick-uq.web.app/pago-pendiente")
                 .build();
 
@@ -306,9 +317,11 @@ public class OrdenServicioImpl implements OrdenServicio {
         // Construir la preferencia de la pasarela con los ítems, metadatos y urls de retorno
         PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                 .backUrls(backUrls)
+                .payer(payer)
                 .items(itemsPasarela)
                 .metadata(Map.of("id_orden", ordenGuardada.getId()))
-                .notificationUrl("https://83dc-2800-e2-6f80-309-bda6-292a-7535-e863.ngrok-free.app/api/general/notificacion-pago")//URL TOMADA DEL NGROK
+                .notificationUrl("https://76773d1be309.ngrok-free.app/api/general/notificacion-pago")//URL TOMADA DEL NGROK
+                .autoReturn("approved")
                 .build();
 
 
