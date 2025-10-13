@@ -3,6 +3,7 @@ package proyecto.controladores;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import proyecto.modelo.documentos.Evento;
@@ -14,6 +15,7 @@ import proyecto.modelo.dto.evento.ItemEventoDTO;
 import proyecto.modelo.enums.Ciudad;
 import proyecto.modelo.enums.TipoEvento;
 import proyecto.servicios.implementaciones.OrdenServicioImpl;
+import proyecto.servicios.implementaciones.RecaptchaServicioImpl;
 import proyecto.servicios.interfaces.CuentaServicio;
 import proyecto.servicios.interfaces.EventoServicio;
 
@@ -29,6 +31,17 @@ public class GeneralControlador {
     private final CuentaServicio cuentaServicio;
 
     private final OrdenServicioImpl ordenServicio;
+
+
+    @Autowired
+    private RecaptchaServicioImpl recaptchaService;
+
+    @PostMapping("/validate")
+    public ResponseEntity<MensajeDTO<Boolean>> validateToken(@RequestBody Map<String, String> request) throws Exception {
+        String token = request.get("token");
+        boolean isValid = recaptchaService.verifyRecaptcha(token);
+        return ResponseEntity.ok(new MensajeDTO<>(false, isValid));
+    }
 
 
     @PostMapping("/notificacion-pago")
