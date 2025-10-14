@@ -16,8 +16,8 @@ public record EditarEventoDTO(
         String ciudad,
         @NotNull LocalDate fechaEvento,
 
-        @NotNull imagenDTO imagenPortada,
-        @NotNull imagenDTO imagenLocalidades
+        @NotNull String imagenPortada,
+        @NotNull String imagenLocalidades
 
 
 ) {

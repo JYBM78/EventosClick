@@ -73,10 +73,10 @@ public class EventoServicioImpl implements EventoServicio {
         }
 
         eventoModificado.setNombre(editarEventoDTO.nombre());
-        eventoModificado.setImagenPortada(editarEventoDTO.imagenPortada().url());
+        eventoModificado.setImagenPortada(editarEventoDTO.imagenPortada());
        // eventoModificado.setEstado(editarEventoDTO.estado());
         eventoModificado.setDescripcion(editarEventoDTO.descripcion());
-        eventoModificado.setImagenLocalidades(editarEventoDTO.imagenLocalidades().url());
+        eventoModificado.setImagenLocalidades(editarEventoDTO.imagenLocalidades());
         eventoModificado.setFechaEvento(editarEventoDTO.fechaEvento());
 
         eventoRepo.save(eventoModificado);
@@ -92,6 +92,7 @@ public class EventoServicioImpl implements EventoServicio {
 
         evento.setEstado(EstadoEvento.ELIMINADO);
 
+        System.out.println(id);
         eventoRepo.save(evento);
 
         return "El evento ha sido eliminado.";

@@ -68,8 +68,8 @@ public class AdmistradorControlador {
 
     @DeleteMapping("/eliminar-evento/{id}")
     public ResponseEntity<MensajeDTO<String>> eliminarEvento(@PathVariable String id) throws Exception{
-        eventoServicio.eliminarEvento(id);
-        return ResponseEntity.ok(new MensajeDTO<>(false, "Evento eliminado exitosamente"));
+
+        return ResponseEntity.ok(new MensajeDTO<>(false, eventoServicio.eliminarEvento(id)));
     }
 
     //ORGANIZAR
