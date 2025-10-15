@@ -1,18 +1,20 @@
 #
-# Build stage
+# Etapa 1: Construcción del JAR
 #
-FROM gradle:latest AS build
-COPY --chown=gradle:gradle . /home/gradle/src
+FROM gradle:8.7-jdk17 AS build
 WORKDIR /home/gradle/src
-RUN gradle clean
-RUN gradle bootJar
-
+COPY --chown=gradle:gradle . .
+RUN gradle clean bootJar --no-daemon
 
 #
-# Package stage
+# Etapa 2: Imagen final para ejecutar el JAR
 #
-FROM openjdk:17
-ARG JAR_FILE=build/libs/*.jar
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
 COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
+
+# Render asigna el puerto como variable de entorno
+ENV PORT=8080
 EXPOSE ${PORT}
-ENTRYPOINT ["java","-jar","/app.jar"]
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
