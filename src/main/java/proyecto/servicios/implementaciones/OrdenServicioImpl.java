@@ -99,7 +99,7 @@ public class OrdenServicioImpl implements OrdenServicio {
         // Enviar correo de confirmación
         String correoPrueba = "eventosClick@gmail.com";
         EmailDTO emailDTO = new EmailDTO(
-                "Detalles de tu compra en UniEventos",
+                "Detalles de tu compra en EventosClick",
 
                  // Asunto del correo
                 "Gracias por tu compra. Adjuntamos el código QR de tu orden y los detalles de la misma.", // Cuerpo del correo
