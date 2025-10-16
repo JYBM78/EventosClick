@@ -19,13 +19,21 @@ public class RecaptchaServicioImpl {
     @Value("${google.recaptcha.secret}")
     private String recaptchaSecret;
 
-    //@Value("${google.recaptcha.verify-url}")
-    private String verifyUrl = "https://www.google.com/recaptcha/api/siteverify";
+    @Value("${google.recaptcha.verify-url}")
+    private String verifyUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
     public boolean verifyRecaptcha(String token) {
-        //System.out.println("Token recibido: " + token);
+        System.out.println("Token recibido: " + token);
+        System.out.println("Secret: " + recaptchaSecret); // si lo tomas de variables de entorno
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity("https://www.google.com", String.class);
+            System.out.println("Google responde: " + response.getStatusCode());
+        } catch (Exception e) {
+            System.out.println("Error conectando con Google: " + e.getMessage());
+        }
+
 
         // 🔹 Cuerpo con formato correcto
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -44,7 +52,7 @@ public class RecaptchaServicioImpl {
         Map<String, Object> body = response.getBody();
         if (body == null) return false;
 
-        //System.out.println("Respuesta de Google: " + body);
+        System.out.println("Respuesta de Google: " + body);
 
         return (Boolean) body.get("success");
     }
