@@ -25,7 +25,7 @@ public class RecaptchaServicioImpl {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public boolean verifyRecaptcha(String token) {
-        System.out.println("Token recibido: " + token);
+        //System.out.println("Token recibido: " + token);
 
         // 🔹 Cuerpo con formato correcto
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -44,7 +44,7 @@ public class RecaptchaServicioImpl {
         Map<String, Object> body = response.getBody();
         if (body == null) return false;
 
-        System.out.println("Respuesta de Google: " + body);
+        //System.out.println("Respuesta de Google: " + body);
 
         return (Boolean) body.get("success");
     }
