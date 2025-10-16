@@ -16,9 +16,9 @@ public record CrearOrdenDTO(
 
         @NotBlank String  codigoPasarela,
         @Positive float total,
-        @NotNull List<DetalleOrden> items,
-        //FALTO CUPON
-         String idCupon
+        @NotNull List<DetalleOrden> items
+
+
 
 
 ) {

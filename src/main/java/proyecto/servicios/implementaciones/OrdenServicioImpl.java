@@ -124,7 +124,7 @@ public class OrdenServicioImpl implements OrdenServicio {
         orden.setTotal(editarOrdenDTO.total());
         orden.setIdCliente(editarOrdenDTO.idCliente());
 
-        orden.setIdCupon(editarOrdenDTO.idCupon());
+
 
         ordenRepo.save(orden);
         return "La orden ha sido actualizada con éxito.";

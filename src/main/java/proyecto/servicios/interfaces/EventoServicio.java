@@ -2,6 +2,7 @@ package proyecto.servicios.interfaces;
 
 
 
+import org.springframework.stereotype.Service;
 import proyecto.modelo.documentos.Evento;
 import proyecto.modelo.dto.evento.*;
 import proyecto.modelo.enums.TipoEvento;
