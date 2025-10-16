@@ -305,10 +305,10 @@ public class OrdenServicioImpl implements OrdenServicio {
 
         // Configurar las urls de retorno de la pasarela (Frontend)
         PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                .success("https://www.tu-sitio/success")
-                //.success("https://front-eventoClick-uq.web.app/pago-exitoso")
-                .failure("https://www.tu-sitio/failure")
-                .pending("https://front-eventoClick-uq.web.app/pago-pendiente")
+                //.success("https://www.tu-sitio/success")
+                .success("https://app-fronted-eventosclick.web.app/pago-exitoso")
+                .failure("https://app-fronted-eventosclick.web.app/pago-fallido")
+                .pending("https://app-fronted-eventosclick.web.app/pago-pendiente")
                 .build();
 
 
