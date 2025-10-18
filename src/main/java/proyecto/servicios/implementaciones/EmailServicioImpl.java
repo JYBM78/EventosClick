@@ -108,8 +108,8 @@ public class EmailServicioImpl implements EmailServicio {
 
         // Enviar el correo
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
-                .withTransportStrategy(TransportStrategy.SMTP_TLS)
+                .withSMTPServer("smtp.gmail.com", 465, correo, contra)
+                .withTransportStrategy(TransportStrategy.SMTP_SSL)
                 .withDebugLogging(true)
                 .buildMailer()) {
             mailer.sendMail(email);
