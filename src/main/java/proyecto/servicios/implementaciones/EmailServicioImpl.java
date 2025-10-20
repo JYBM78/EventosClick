@@ -38,7 +38,7 @@ public class EmailServicioImpl implements EmailServicio {
     @Override
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
-        
+
 
 
         String contra = System.getenv("CONTRA");
@@ -56,8 +56,8 @@ public class EmailServicioImpl implements EmailServicio {
         //Hola123?
         //clave de aplicación: qyor yzrc eigg zdcg
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
-                .withTransportStrategy(TransportStrategy.SMTP_TLS)
+                .withSMTPServer("smtp.gmail.com", 465, correo, contra)
+                .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
 
@@ -82,8 +82,8 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, "dbak fqoc dpui gbka")
-                .withTransportStrategy(TransportStrategy.SMTP_TLS)
+                .withSMTPServer("smtp.gmail.com", 465, correo, "dbak fqoc dpui gbka")
+                .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
 
@@ -114,8 +114,8 @@ public class EmailServicioImpl implements EmailServicio {
 
         // Enviar el correo
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, "dbak fqoc dpui gbka")
-                .withTransportStrategy(TransportStrategy.SMTP_TLS)
+                .withSMTPServer("smtp.gmail.com", 465, correo, "dbak fqoc dpui gbka")
+                .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
             mailer.sendMail(email);
