@@ -35,7 +35,6 @@ public class EmailServicioImpl implements EmailServicio {
 
 
     @Override
-
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
 
         // Leer la clave desde variable de entorno
@@ -57,7 +56,7 @@ public class EmailServicioImpl implements EmailServicio {
 
         // Configuración del Mailer con Gmail (puerto 465 y SSL)
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", "dbakfqocdpuigbka")
+                .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", getPassword())
                 .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -83,7 +82,7 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, correo, "dbak fqoc dpui gbka")
+                .withSMTPServer("smtp.gmail.com", 465, correo, getPassword())
                 .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -92,6 +91,13 @@ public class EmailServicioImpl implements EmailServicio {
         }
 
 
+    }
+    private String getPassword() {
+        String pass = System.getenv("CONTRA");
+        if (pass == null || pass.trim().isEmpty()) {
+            throw new RuntimeException("❌ Variable de entorno CONTRA no está configurada");
+        }
+        return pass.trim();
     }
     @Override
     @Async
