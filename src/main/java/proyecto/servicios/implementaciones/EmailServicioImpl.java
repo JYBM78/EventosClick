@@ -93,10 +93,8 @@ public class EmailServicioImpl implements EmailServicio {
 
     }
     private String getPassword() {
-        String pass = System.getenv("CONTRA");
-        if (pass == null || pass.trim().isEmpty()) {
-            throw new RuntimeException("❌ Variable de entorno CONTRA no está configurada");
-        }
+        String pass = "dbakfqocdpuigbka";
+        
         return pass.trim();
     }
     @Override
