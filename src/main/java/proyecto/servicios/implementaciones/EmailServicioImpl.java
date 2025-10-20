@@ -39,6 +39,7 @@ public class EmailServicioImpl implements EmailServicio {
     @Override
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
+        System.out.println(contra);
 
 
         Email email = EmailBuilder.startingBlank()
