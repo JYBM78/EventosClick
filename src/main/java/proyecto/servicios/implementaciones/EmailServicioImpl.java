@@ -34,45 +34,39 @@ public class EmailServicioImpl implements EmailServicio {
     private String correo;
 
 
-
     @Override
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
 
-
-
+        // Leer la clave desde variable de entorno
         String contra = System.getenv("CONTRA");
         if (contra != null) {
-            contra = contra.trim();
+            contra = contra.trim(); // eliminar espacios
         }
-        System.out.println("Clave usada: [" + contra + "]");
 
+        // Log de depuración (en producción mejor usar logger, no System.out)
+        System.out.println("🔑 Clave usada: [" + contra + "]");
 
-        System.out.println(contra);
+        // Construcción del email
         Email email = EmailBuilder.startingBlank()
-                .from(correo)
+                .from("eventosclickuni@gmail.com") // debe ser el mismo que se usa en withSMTPServer
                 .to(emailDTO.destinatario())
                 .withSubject(emailDTO.asunto())
                 .withPlainText(emailDTO.cuerpo())
-
                 .buildEmail();
 
-
-        //eventosclickuni@gmail.com
-        //Hola123?
-        //clave de aplicación: qyor yzrc eigg zdcg
+        // Configuración del Mailer con Gmail (puerto 465 y SSL)
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, correo, contra)
-                .withTransportStrategy(TransportStrategy.SMTPS) // 👈 SSL
-                .withDebugLogging(true)
+                .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", contra)
+                .withTransportStrategy(TransportStrategy.SMTPS) // SSL
+                .withDebugLogging(true) // logs detallados de conexión
                 .buildMailer()) {
 
             mailer.sendMail(email);
+            System.out.println("✅ Correo enviado correctamente a " + emailDTO.destinatario());
         }
-
-
-
     }
+
 
     @Override
     @Async
