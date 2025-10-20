@@ -33,14 +33,15 @@ public class EmailServicioImpl implements EmailServicio {
     @Value("${email.user}")
     private String correo;
 
-    @Value("${email.password}")
-    private String contra;
+
 
     @Override
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
         System.out.println(contra);
 
+
+        String contra = System.getenv("CONTRA");
 
         Email email = EmailBuilder.startingBlank()
                 .from(correo)
@@ -55,7 +56,7 @@ public class EmailServicioImpl implements EmailServicio {
         //Hola123?
         //clave de aplicación: qyor yzrc eigg zdcg
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, "dbak fqoc dpui gbka")
+                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {
