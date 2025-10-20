@@ -35,7 +35,7 @@ public class EmailServicioImpl implements EmailServicio {
 
 
     @Override
-    @Async
+
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
 
         // Leer la clave desde variable de entorno
@@ -58,13 +58,13 @@ public class EmailServicioImpl implements EmailServicio {
         // Configuración del Mailer con Gmail (puerto 465 y SSL)
         try (Mailer mailer = MailerBuilder
                 .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", "dbakfqocdpuigbka")
-                .withTransportStrategy(TransportStrategy.SMTPS) // SSL
-                .withDebugLogging(true) // logs detallados de conexión
+                .withTransportStrategy(TransportStrategy.SMTPS)
+                .withDebugLogging(true)
                 .buildMailer()) {
 
             mailer.sendMail(email);
-            System.out.println("✅ Correo enviado correctamente a " + emailDTO.destinatario());
         }
+
     }
 
 
