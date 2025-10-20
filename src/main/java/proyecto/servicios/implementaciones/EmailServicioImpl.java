@@ -42,6 +42,11 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         String contra = System.getenv("CONTRA");
+        if (contra != null) {
+            contra = contra.trim();
+        }
+        System.out.println("Clave usada: [" + contra + "]");
+
 
         System.out.println(contra);
         Email email = EmailBuilder.startingBlank()
@@ -58,12 +63,13 @@ public class EmailServicioImpl implements EmailServicio {
         //clave de aplicación: qyor yzrc eigg zdcg
         try (Mailer mailer = MailerBuilder
                 .withSMTPServer("smtp.gmail.com", 465, correo, contra)
-                .withTransportStrategy(TransportStrategy.SMTPS)
+                .withTransportStrategy(TransportStrategy.SMTPS) // 👈 SSL
                 .withDebugLogging(true)
                 .buildMailer()) {
 
             mailer.sendMail(email);
         }
+
 
 
     }
