@@ -43,6 +43,7 @@ public class EmailServicioImpl implements EmailServicio {
 
         String contra = System.getenv("CONTRA");
 
+        System.out.println(contra);
         Email email = EmailBuilder.startingBlank()
                 .from(correo)
                 .to(emailDTO.destinatario())
