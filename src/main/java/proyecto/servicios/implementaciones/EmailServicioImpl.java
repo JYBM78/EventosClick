@@ -8,6 +8,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import lombok.Value;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.mailer.Mailer;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
@@ -29,8 +30,11 @@ import java.util.Map;
 
 @Service
 public class EmailServicioImpl implements EmailServicio {
-    private final String correo = "eventosclickuni@gmail.com";
-    private final String contra = "qyor yzrc eigg zdcg";
+    @Value("${email.user}")
+    private String correo;
+
+    @Value("${email.password}")
+    private String contra;
 
     @Override
     @Async
