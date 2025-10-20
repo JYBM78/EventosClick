@@ -56,7 +56,7 @@ public class EmailServicioImpl implements EmailServicio {
 
         // Configuración del Mailer con Gmail (puerto 465 y SSL)
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", getPassword())
+                .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", "dbakfqocdpuigbka")
                 .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -82,7 +82,7 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, correo, getPassword())
+                .withSMTPServer("smtp.gmail.com", 465, correo, "dbak fqoc dpui gbka")
                 .withTransportStrategy(TransportStrategy.SMTPS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -93,8 +93,10 @@ public class EmailServicioImpl implements EmailServicio {
 
     }
     private String getPassword() {
-        String pass = "dbakfqocdpuigbka";
-        
+        String pass = System.getenv("CONTRA");
+        if (pass == null || pass.trim().isEmpty()) {
+            throw new RuntimeException("❌ Variable de entorno CONTRA no está configurada");
+        }
         return pass.trim();
     }
     @Override
