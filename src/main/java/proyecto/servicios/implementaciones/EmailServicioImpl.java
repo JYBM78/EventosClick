@@ -55,7 +55,7 @@ public class EmailServicioImpl implements EmailServicio {
         //Hola123?
         //clave de aplicación: qyor yzrc eigg zdcg
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
+                .withSMTPServer("smtp.gmail.com", 587, correo, "dbak fqoc dpui gbka")
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -81,7 +81,7 @@ public class EmailServicioImpl implements EmailServicio {
 
 
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
+                .withSMTPServer("smtp.gmail.com", 587, correo, "dbak fqoc dpui gbka")
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {
@@ -113,7 +113,7 @@ public class EmailServicioImpl implements EmailServicio {
 
         // Enviar el correo
         try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 587, correo, contra)
+                .withSMTPServer("smtp.gmail.com", 587, correo, "dbak fqoc dpui gbka")
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer()) {
