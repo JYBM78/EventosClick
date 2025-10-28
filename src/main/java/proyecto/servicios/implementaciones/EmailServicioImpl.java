@@ -40,7 +40,7 @@ public class EmailServicioImpl implements EmailServicio {
     // 🔹 Construir y configurar el mailer de SendGrid
     private Mailer buildMailer() {
         return MailerBuilder
-                .withSMTPServer(SENDGRID_HOST, SENDGRID_PORT, "apikey", SENDGRID_API_KEY)
+                .withSMTPServer(SENDGRID_HOST, SENDGRID_PORT, "eventosClick", SENDGRID_API_KEY)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer();
