@@ -8,8 +8,15 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import org.springframework.beans.factory.annotation.Value;
-import org.simplejavamail.api.email.Email;
+
 import org.simplejavamail.api.mailer.Mailer;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
 import org.simplejavamail.email.EmailBuilder;
@@ -40,7 +47,7 @@ public class EmailServicioImpl implements EmailServicio {
     // 🔹 Construir y configurar el mailer de SendGrid
     private Mailer buildMailer() {
         return MailerBuilder
-                .withSMTPServer(SENDGRID_HOST, SENDGRID_PORT, "eventosClick", SENDGRID_API_KEY)
+                .withSMTPServer(SENDGRID_HOST, SENDGRID_PORT, "apikey", SENDGRID_API_KEY)
                 .withTransportStrategy(TransportStrategy.SMTP_TLS)
                 .withDebugLogging(true)
                 .buildMailer();
@@ -52,58 +59,80 @@ public class EmailServicioImpl implements EmailServicio {
 
     @Override
     @Async
-    public void enviarCorreo(EmailDTO emailDTO) throws Exception {
-        System.out.println(SENDGRID_API_KEY);
-        Email email = EmailBuilder.startingBlank()
-                .from("EventosClick", REMITENTE)
-                .to(emailDTO.destinatario())
-                .withSubject(emailDTO.asunto())
-                .withPlainText(emailDTO.cuerpo())
-                .buildEmail();
+    public void enviarCorreo(EmailDTO emailDTO) throws IOException {
+        System.out.println(" SendGrid Key cargada: " + (SENDGRID_API_KEY != null));
 
-        try (Mailer mailer = buildMailer()) {
-            mailer.sendMail(email);
+        Email from = new Email(REMITENTE);
+        Email to = new Email(emailDTO.destinatario());
+        Content content = new Content("text/plain", emailDTO.cuerpo());
+        Mail mail = new Mail(from, emailDTO.asunto(), to, content);
+
+        SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+        Request request = new Request();
+
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+            System.out.println(" Correo enviado: " + response.getStatusCode());
+            System.out.println("Body: " + response.getBody());
+            System.out.println("Headers: " + response.getHeaders());
+        } catch (IOException ex) {
+            System.err.println(" Error al enviar correo: " + ex.getMessage());
+            throw ex;
         }
     }
 
     @Override
-    @Async
     public void enviarCorreoHtml(EmailDTO emailDTO) throws Exception {
-        Email email = EmailBuilder.startingBlank()
-                .from("EventosClick", REMITENTE)
-                .to(emailDTO.destinatario())
-                .withSubject(emailDTO.asunto())
-                .appendTextHTML(emailDTO.cuerpo())
-                .buildEmail();
-
-        try (Mailer mailer = buildMailer()) {
-            mailer.sendMail(email);
-        }
+        
     }
 
     @Override
-    @Async
     public void enviarCorreoConQr(EmailDTO emailDTO, Orden orden) throws Exception {
-        // 🔹 Generar contenido y QR
-        String contenidoQr = generarContenidoQr(orden);
-        ByteArrayOutputStream qrStream = new ByteArrayOutputStream();
 
-        generarImagenQr(contenidoQr,qrStream);
-
-        // 🔹 Crear correo con el QR adjunto
-        Email email = EmailBuilder.startingBlank()
-                .from("EventosClick", REMITENTE)
-                .to(emailDTO.destinatario())
-                .withSubject(emailDTO.asunto())
-                .withPlainText(emailDTO.cuerpo())
-                .withAttachment("codigo_qr.png", qrStream.toByteArray(), "image/png")
-                .buildEmail();
-
-        // 🔹 Enviar correo
-        try (Mailer mailer = buildMailer()) {
-            mailer.sendMail(email);
-        }
     }
+
+//    @Override
+//    @Async
+//    public void enviarCorreoHtml(EmailDTO emailDTO) throws Exception {
+//        Email email = EmailBuilder.startingBlank()
+//                .from("EventosClick", REMITENTE)
+//                .to(emailDTO.destinatario())
+//                .withSubject(emailDTO.asunto())
+//                .appendTextHTML(emailDTO.cuerpo())
+//                .buildEmail();
+//
+//        try (Mailer mailer = buildMailer()) {
+//            mailer.sendMail(email);
+//        }
+//    }
+
+//    @Override
+//    @Async
+//    public void enviarCorreoConQr(EmailDTO emailDTO, Orden orden) throws Exception {
+//        // 🔹 Generar contenido y QR
+//        String contenidoQr = generarContenidoQr(orden);
+//        ByteArrayOutputStream qrStream = new ByteArrayOutputStream();
+//
+//        generarImagenQr(contenidoQr,qrStream);
+//
+//        // 🔹 Crear correo con el QR adjunto
+//        Email email = EmailBuilder.startingBlank()
+//                .from("EventosClick", REMITENTE)
+//                .to(emailDTO.destinatario())
+//                .withSubject(emailDTO.asunto())
+//                .withPlainText(emailDTO.cuerpo())
+//                .withAttachment("codigo_qr.png", qrStream.toByteArray(), "image/png")
+//                .buildEmail();
+//
+//        // 🔹 Enviar correo
+//        try (Mailer mailer = buildMailer()) {
+//            mailer.sendMail(email);
+//        }
+//    }
 
     // Método para generar el contenido del QR a partir de la orden
     private String generarContenidoQr(Orden orden) {
