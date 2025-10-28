@@ -39,7 +39,7 @@ import java.util.Map;
 public class EmailServicioImpl implements EmailServicio {
     // 📧 Credenciales SendGrid
     private static final String REMITENTE = "eventosclickuni@gmail.com";
-    @Value("${sendgrid.api.key}")
+    @Value("${sendgrid_api_key}")
     private   String SENDGRID_API_KEY;
     private static final String SENDGRID_HOST = "smtp.sendgrid.net";
     private static final int SENDGRID_PORT = 587;
@@ -61,6 +61,7 @@ public class EmailServicioImpl implements EmailServicio {
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws IOException {
         System.out.println(" SendGrid Key cargada: " + (SENDGRID_API_KEY != null));
+        System.out.println(SENDGRID_API_KEY);
 
         Email from = new Email(REMITENTE);
         Email to = new Email(emailDTO.destinatario());
