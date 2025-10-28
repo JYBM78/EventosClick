@@ -30,105 +30,77 @@ import java.util.Map;
 
 @Service
 public class EmailServicioImpl implements EmailServicio {
-    @Value("${email.user}")
-    private String correo;
+    // 📧 Credenciales SendGrid
+    private static final String REMITENTE = "eventosclickuni@gmail.com";
+    private static final String SENDGRID_API_KEY = "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";
+    private static final String SENDGRID_HOST = "smtp.sendgrid.net";
+    private static final int SENDGRID_PORT = 587;
 
+    // 🔹 Construir y configurar el mailer de SendGrid
+    private Mailer buildMailer() {
+        return MailerBuilder
+                .withSMTPServer(SENDGRID_HOST, SENDGRID_PORT, "apikey", SENDGRID_API_KEY)
+                .withTransportStrategy(TransportStrategy.SMTP_TLS)
+                .withDebugLogging(true)
+                .buildMailer();
+    }
+
+    // ============================================================
+    // ================ MÉTODOS DE ENVÍO DE CORREOS ===============
+    // ============================================================
 
     @Override
+    @Async
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
-
-        // Leer la clave desde variable de entorno
-        String contra = System.getenv("CONTRA");
-        if (contra != null) {
-            contra = contra.trim(); // eliminar espacios
-        }
-
-        // Log de depuración (en producción mejor usar logger, no System.out)
-        System.out.println("🔑 Clave usada: [" + contra + "]");
-
-        // Construcción del email
         Email email = EmailBuilder.startingBlank()
-                .from("eventosclickuni@gmail.com") // debe ser el mismo que se usa en withSMTPServer
+                .from("EventosClick", REMITENTE)
                 .to(emailDTO.destinatario())
                 .withSubject(emailDTO.asunto())
                 .withPlainText(emailDTO.cuerpo())
                 .buildEmail();
 
-        // Configuración del Mailer con Gmail (puerto 465 y SSL)
-        try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, "eventosclickuni@gmail.com", "dbakfqocdpuigbka")
-                .withTransportStrategy(TransportStrategy.SMTPS)
-                .withDebugLogging(true)
-                .buildMailer()) {
-
+        try (Mailer mailer = buildMailer()) {
             mailer.sendMail(email);
         }
-
     }
-
 
     @Override
     @Async
     public void enviarCorreoHtml(EmailDTO emailDTO) throws Exception {
-
-
         Email email = EmailBuilder.startingBlank()
-                .from(correo)
+                .from("EventosClick", REMITENTE)
                 .to(emailDTO.destinatario())
                 .withSubject(emailDTO.asunto())
                 .appendTextHTML(emailDTO.cuerpo())
-
                 .buildEmail();
 
-
-        try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, correo, "dbak fqoc dpui gbka")
-                .withTransportStrategy(TransportStrategy.SMTPS)
-                .withDebugLogging(true)
-                .buildMailer()) {
-
+        try (Mailer mailer = buildMailer()) {
             mailer.sendMail(email);
         }
-
-
     }
-    private String getPassword() {
-        String pass = System.getenv("CONTRA");
-        if (pass == null || pass.trim().isEmpty()) {
-            throw new RuntimeException("❌ Variable de entorno CONTRA no está configurada");
-        }
-        return pass.trim();
-    }
+
     @Override
     @Async
     public void enviarCorreoConQr(EmailDTO emailDTO, Orden orden) throws Exception {
-        // Generar contenido del QR
+        // 🔹 Generar contenido y QR
         String contenidoQr = generarContenidoQr(orden);
-
-        // Generar la imagen del código QR
         ByteArrayOutputStream qrStream = new ByteArrayOutputStream();
-        generarImagenQr(contenidoQr, qrStream);
 
-        System.out.println(emailDTO.destinatario());
-        // Crear el correo con el adjunto del QR
+        generarImagenQr(contenidoQr,qrStream);
+
+        // 🔹 Crear correo con el QR adjunto
         Email email = EmailBuilder.startingBlank()
-                .from("unieventosfae@gmail.com")
+                .from("EventosClick", REMITENTE)
                 .to(emailDTO.destinatario())
                 .withSubject(emailDTO.asunto())
                 .withPlainText(emailDTO.cuerpo())
                 .withAttachment("codigo_qr.png", qrStream.toByteArray(), "image/png")
                 .buildEmail();
 
-        // Enviar el correo
-        try (Mailer mailer = MailerBuilder
-                .withSMTPServer("smtp.gmail.com", 465, correo, "dbak fqoc dpui gbka")
-                .withTransportStrategy(TransportStrategy.SMTPS)
-                .withDebugLogging(true)
-                .buildMailer()) {
+        // 🔹 Enviar correo
+        try (Mailer mailer = buildMailer()) {
             mailer.sendMail(email);
         }
-
-
     }
 
     // Método para generar el contenido del QR a partir de la orden
