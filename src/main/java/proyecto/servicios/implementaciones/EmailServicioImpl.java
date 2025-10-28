@@ -53,6 +53,7 @@ public class EmailServicioImpl implements EmailServicio {
     @Override
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws Exception {
+        System.out.println(SENDGRID_API_KEY);
         Email email = EmailBuilder.startingBlank()
                 .from("EventosClick", REMITENTE)
                 .to(emailDTO.destinatario())
