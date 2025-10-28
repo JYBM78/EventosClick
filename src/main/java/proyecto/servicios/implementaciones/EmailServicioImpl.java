@@ -32,7 +32,8 @@ import java.util.Map;
 public class EmailServicioImpl implements EmailServicio {
     // 📧 Credenciales SendGrid
     private static final String REMITENTE = "eventosclickuni@gmail.com";
-    private static final String SENDGRID_API_KEY = "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";
+    @Value("${sendgrid.api.key}")
+    private   String SENDGRID_API_KEY;
     private static final String SENDGRID_HOST = "smtp.sendgrid.net";
     private static final int SENDGRID_PORT = 587;
 
