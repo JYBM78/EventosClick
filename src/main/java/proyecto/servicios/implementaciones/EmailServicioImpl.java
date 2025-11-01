@@ -13,6 +13,7 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,13 +89,63 @@ public class EmailServicioImpl implements EmailServicio {
     }
 
     @Override
+    @Async
     public void enviarCorreoHtml(EmailDTO emailDTO) throws Exception {
-        
+        System.out.println(" Enviando correo HTML a: " + emailDTO.destinatario());
+
+        Email from = new Email(REMITENTE);
+        Email to = new Email(emailDTO.destinatario());
+        Content content = new Content("text/html", emailDTO.cuerpo());
+        Mail mail = new Mail(from, emailDTO.asunto(), to, content);
+
+        enviarMailConSendGrid(mail);
     }
 
     @Override
+    @Async
     public void enviarCorreoConQr(EmailDTO emailDTO, Orden orden) throws Exception {
+        System.out.println(" Enviando correo con QR a: " + emailDTO.destinatario());
 
+        // 1️⃣ Generar contenido QR
+        String contenidoQr = generarContenidoQr(orden);
+
+        // 2️⃣ Crear imagen QR
+        ByteArrayOutputStream qrStream = new ByteArrayOutputStream();
+        generarImagenQr(contenidoQr, qrStream);
+
+        // 3️⃣ Convertir QR a Base64 para adjuntarlo
+        String qrBase64 = Base64.getEncoder().encodeToString(qrStream.toByteArray());
+
+        // 4️⃣ Crear correo con HTML y adjunto QR
+        Email from = new Email(REMITENTE);
+        Email to = new Email(emailDTO.destinatario());
+        Content content = new Content("text/html", emailDTO.cuerpo());
+        Mail mail = new Mail(from, emailDTO.asunto(), to, content);
+
+        Attachments attachment = new Attachments();
+        attachment.setContent(qrBase64);
+        attachment.setType("image/png");
+        attachment.setFilename("codigo_qr.png");
+        attachment.setDisposition("attachment");
+        mail.addAttachments(attachment);
+
+        enviarMailConSendGrid(mail);
+    }
+    private void enviarMailConSendGrid(Mail mail) throws IOException {
+        SendGrid sg = new SendGrid(SENDGRID_API_KEY);
+        Request request = new Request();
+        try {
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+            Response response = sg.api(request);
+
+            System.out.println(" Correo enviado: " + response.getStatusCode());
+            System.out.println(" Respuesta: " + response.getBody());
+        } catch (IOException ex) {
+            System.err.println(" Error al enviar correo: " + ex.getMessage());
+            throw ex;
+        }
     }
 
 //    @Override

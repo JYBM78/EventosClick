@@ -197,7 +197,16 @@ public class CuentaServicioImpl implements CuentaServicio {
             Map<String, Object> map = construirClaims(cuenta);
             return new TokenDTO( jwtUtils.generarToken(cuenta.getEmail(), map) );
         }else {
-            throw new Exception("La cuenta no esta activa");
+            BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+            if( !passwordEncoder.matches(loginDTO.password(), cuenta.getPassword()) ) {
+                throw new Exception("La contraseña es incorrecta");
+            }
+
+            cuenta.setEstado(EstadoCuenta.ACTIVO);
+            cuentaRepo.save(cuenta);
+            Map<String, Object> map = construirClaims(cuenta);
+            return new TokenDTO( jwtUtils.generarToken(cuenta.getEmail(), map) );
         }
 
     }

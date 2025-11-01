@@ -98,34 +98,40 @@ public class CarritoServicioImpl implements CarritoServicio {
     }
     @Override
     public void agregarItemUnico(String idCuenta, DetalleCarritoDTO item) throws Exception {
-        Optional<Carrito> carrito = carritoRepo.buscarCarritoPorIdUsuario(idCuenta);
-        if(carrito.isPresent()){
-            Carrito carritoActual = carrito.get();
+        Optional<Carrito> carritoOpt = carritoRepo.buscarCarritoPorIdUsuario(idCuenta);
 
-            // Verificar si el item ya está en el carrito
-            Optional<DetalleCarrito> itemExistente = carritoActual.getItems().stream()
-                    .filter(i -> i.getIdEvento().equals(item.idEvento()))
-                    .findFirst();
-            if (itemExistente.isPresent()) {
-                // Si el item ya existe, incrementar la cantidad
-                DetalleCarrito detalleExistente = itemExistente.get();
-                detalleExistente.setCantidad(detalleExistente.getCantidad() + item.cantidad());
-            } else {
-                // Si el item no existe, agregarlo al carrito
-                DetalleCarrito detalleCarrito = new DetalleCarrito();
-                detalleCarrito.setIdDetalleCarrito(item.idDetalleCarrito());
-                detalleCarrito.setCantidad(item.cantidad());
-                detalleCarrito.setIdEvento(item.idEvento());
-                detalleCarrito.setNombreLocalidad(item.nombreLocalidad());
-                detalleCarrito.setPrecioUnitario(item.precioUnitario());
-                carritoActual.getItems().add(detalleCarrito);
-            }
-            // Guardar el carrito actualizado en la base de datos
-            carritoRepo.save(carrito.get());
-        }else{
+        if (carritoOpt.isEmpty()) {
             throw new Exception("Carrito no encontrado");
         }
+
+        Carrito carrito = carritoOpt.get();
+
+        // Buscar si el mismo evento y localidad ya existen en el carrito
+        Optional<DetalleCarrito> itemExistente = carrito.getItems().stream()
+                .filter(i -> i.getIdEvento().equals(item.idEvento()) &&
+                        i.getNombreLocalidad().equalsIgnoreCase(item.nombreLocalidad()))
+                .findFirst();
+
+        if (itemExistente.isPresent()) {
+            // Si ya existe, se incrementa la cantidad
+            DetalleCarrito detalleExistente = itemExistente.get();
+            detalleExistente.setCantidad(detalleExistente.getCantidad() + item.cantidad());
+        } else {
+            // Si no existe, se crea un nuevo detalle de carrito
+            DetalleCarrito nuevoItem = new DetalleCarrito();
+            nuevoItem.setIdDetalleCarrito(item.idDetalleCarrito());
+            nuevoItem.setIdEvento(item.idEvento());
+            nuevoItem.setNombreLocalidad(item.nombreLocalidad());
+            nuevoItem.setCantidad(item.cantidad());
+            nuevoItem.setPrecioUnitario(item.precioUnitario());
+
+            carrito.getItems().add(nuevoItem);
+        }
+
+        // Guardar el carrito actualizado
+        carritoRepo.save(carrito);
     }
+
 
     @Override
     public void editarItem(String idCarrito, DetalleCarritoDTO item) throws Exception {

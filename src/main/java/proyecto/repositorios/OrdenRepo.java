@@ -18,9 +18,11 @@ public interface OrdenRepo extends MongoRepository<Orden, String> {
     @Query("{ 'idCliente' : ?0 }")
     List<Orden> buscarOrdenesPorCliente(String idCliente);
 
-
     @Query("{ 'fecha' : { $gte: ?0, $lte: ?1 } }")
     List<Orden> buscarOrdenesPorRangoDeFechas(Date fechaInicio, Date fechaFin);
+
+    @Query("{ 'idCliente': ?0, 'items.idEvento': ?1 }")
+    List<Orden> buscarOrdenesPorClienteYEvento(String idCliente, String idEvento);
 
 
 
