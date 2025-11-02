@@ -22,6 +22,7 @@ import proyecto.modelo.dto.orden.InformacionOrdenDTO;
 import proyecto.modelo.vo.DetalleOrden;
 import proyecto.modelo.vo.Localidad;
 import proyecto.modelo.vo.Pago;
+import proyecto.modelo.vo.Silla;
 import proyecto.repositorios.EventoRepo;
 import proyecto.repositorios.OrdenRepo;
 import proyecto.servicios.interfaces.CuentaServicio;
@@ -54,7 +55,7 @@ public class OrdenServicioImpl implements OrdenServicio {
     public String crearOrden(CrearOrdenDTO crearOrdenDTO) throws Exception {
         LocalDate fechaActual = LocalDate.now();
 
-        // Validar cada detalle de la orden antes de crearla
+// Validar cada detalle de la orden antes de crearla
         for (DetalleOrden detalle : crearOrdenDTO.items()) {
             Evento evento = eventoServicio.obtenerEvento(detalle.getIdEvento());
 
@@ -79,7 +80,33 @@ public class OrdenServicioImpl implements OrdenServicio {
                 throw new IllegalArgumentException("Has superado el límite de boletas permitidas para el evento " +
                         evento.getNombre() + " (" + limiteBoletas + " máximo por usuario)");
             }
+
+            // 🔹 Validar disponibilidad de las sillas seleccionadas
+            if (detalle.getSillasSeleccionadas() != null && !detalle.getSillasSeleccionadas().isEmpty()) {
+                for (String codigoSilla : detalle.getSillasSeleccionadas()) {
+                    Silla silla = localidad.getSillas().stream()
+                            .filter(s -> s.getCodigo().equals(codigoSilla))
+                            .findFirst()
+                            .orElseThrow(() -> new Exception("La silla con código " + codigoSilla +
+                                    " no existe en la localidad " + localidad.getNombre()));
+
+                    if (!silla.isDisponible()) {
+                        throw new Exception("La silla " + codigoSilla + " ya está ocupada en " +
+                                localidad.getNombre() + " del evento " + evento.getNombre());
+                    }
+
+                    // ✅ Marcar silla como ocupada
+                    silla.setDisponible(false);
+                }
+            }
+
+            // 🔸 Reducir capacidad disponible en la localidad
+            localidad.setEntradasVendidas(localidad.getCapacidadDisponible() - detalle.getCantidad());
+
+            // 🔸 Guardar cambios en el evento (actualiza sillas ocupadas)
+            eventoRepo.save(evento);
         }
+
 
         // Crear y guardar la nueva orden
         Orden nuevaOrden = new Orden();
