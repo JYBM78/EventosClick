@@ -12,6 +12,7 @@ import proyecto.repositorios.CarritoRepo;
 import proyecto.repositorios.CuentaRepo;
 import proyecto.servicios.interfaces.CarritoServicio;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -124,6 +125,7 @@ public class CarritoServicioImpl implements CarritoServicio {
             nuevoItem.setNombreLocalidad(item.nombreLocalidad());
             nuevoItem.setCantidad(item.cantidad());
             nuevoItem.setPrecioUnitario(item.precioUnitario());
+            nuevoItem.setSillasSeleccionadas(new ArrayList<>(item.sillasSeleccionadas()));
 
             carrito.getItems().add(nuevoItem);
         }
@@ -191,7 +193,8 @@ public class CarritoServicioImpl implements CarritoServicio {
                         detalle.getIdEvento(),
                         detalle.getCantidad(),
                         detalle.getNombreLocalidad(),
-                        detalle.getPrecioUnitario()
+                        detalle.getPrecioUnitario(),
+                        detalle.getSillasSeleccionadas()
                 ))
                 .collect(Collectors.toList());
     }
