@@ -190,14 +190,26 @@ public class EmailServicioImpl implements EmailServicio {
 
     // Método para generar el contenido del QR a partir de la orden
     private String generarContenidoQr(Orden orden) {
-        return "Orden ID: " + orden.getId() + "\n" +
-                "Cliente ID: " + orden.getIdCliente() + "\n" +
-                "Fecha: " + orden.getFecha() + "\n" +
-                "Total: $" + orden.getTotal()+ "\n" +
-                "Estas son tus sillas: $" + orden.getItems().stream()
-                .flatMap(d -> d.getSillasSeleccionadas().stream())
-                .collect(Collectors.joining(", "));
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Orden ID: ").append(orden.getId()).append("\n")
+                .append("Cliente ID: ").append(orden.getIdCliente()).append("\n")
+                .append("Fecha: ").append(orden.getFecha()).append("\n")
+                .append("Total: $").append(orden.getTotal()).append("\n")
+                .append("Sillas asignadas:\n");
+
+        orden.getItems().forEach(item -> {
+            if (item.getSillasSeleccionadas() != null && !item.getSillasSeleccionadas().isEmpty()) {
+                sb.append("Evento: ").append(item.getIdEvento())
+                        .append(" (").append(item.getNombreLocalidad()).append(") → ")
+                        .append(String.join(", ", item.getSillasSeleccionadas()))
+                        .append("\n");
+            }
+        });
+
+        return sb.toString();
     }
+
 
     // Método para generar la imagen del QR
     private void generarImagenQr(String contenido, ByteArrayOutputStream outputStream) throws WriterException, IOException {
