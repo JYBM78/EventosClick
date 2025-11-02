@@ -1,0 +1,32 @@
+steps:
+  # 1) Construir imagen Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        'southamerica-east1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA',
+        '.'
+      ]
+
+  # 2) Subir imagen a Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'southamerica-east1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA'
+      ]
+
+  # 3) Obtener el secreto de MongoDB y desplegar en Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        MONGO_URI=$(gcloud secrets versions access latest --secret="mongo-uri")
+        gcloud run deploy "eventosclick-backend" \
+          --image "southamerica-east1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA" \
+          --region "southamerica-east1" \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars "MONGO_URI=$MONGO_URI"
