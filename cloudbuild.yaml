@@ -5,7 +5,7 @@ steps:
       [
         'build',
         '-t',
-        'southamerica-east1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA',
+        'northamerica-northeast1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA',
         '.'
       ]
 
@@ -14,7 +14,7 @@ steps:
     args:
       [
         'push',
-        'southamerica-east1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA'
+        'northamerica-northeast1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA'
       ]
 
   # 3) Obtener el secreto de MongoDB y desplegar en Cloud Run
