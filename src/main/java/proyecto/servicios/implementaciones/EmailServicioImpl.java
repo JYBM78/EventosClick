@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -192,7 +193,10 @@ public class EmailServicioImpl implements EmailServicio {
         return "Orden ID: " + orden.getId() + "\n" +
                 "Cliente ID: " + orden.getIdCliente() + "\n" +
                 "Fecha: " + orden.getFecha() + "\n" +
-                "Total: $" + orden.getTotal();
+                "Total: $" + orden.getTotal()+ "\n" +
+                "Estas son tus sillas: $" + orden.getItems().stream()
+                .flatMap(d -> d.getSillasSeleccionadas().stream())
+                .collect(Collectors.joining(", "));
     }
 
     // Método para generar la imagen del QR

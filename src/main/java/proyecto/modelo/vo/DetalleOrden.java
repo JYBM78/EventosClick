@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Builder
 @Getter
@@ -16,4 +18,6 @@ public class DetalleOrden {
     private float precio;
     private String nombreLocalidad;
     private int cantidad;
+    private  List<String> sillasSeleccionadas;
+
 }

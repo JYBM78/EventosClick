@@ -53,6 +53,7 @@ public class OrdenServicioImpl implements OrdenServicio {
     public String crearOrden(CrearOrdenDTO crearOrdenDTO) throws Exception {
         LocalDate fechaActual = LocalDate.now();
 
+
         // Validar cada ítem antes de crear la orden
         for (DetalleOrden detalle : crearOrdenDTO.items()) {
             Evento evento = eventoServicio.obtenerEvento(detalle.getIdEvento());
@@ -408,6 +409,7 @@ public class OrdenServicioImpl implements OrdenServicio {
 
 
     private Orden obtenerOrden(String idOrden) throws Exception {
+
         Optional<Orden> ordenOptional = ordenRepo.findById(idOrden);
         if (ordenOptional.isEmpty()) {
             throw new Exception("No se encontró una orden con el ID " + idOrden);
