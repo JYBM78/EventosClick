@@ -1,6 +1,5 @@
 package proyecto.servicios.implementaciones;
 
-
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
@@ -10,7 +9,6 @@ import com.mercadopago.client.preference.PreferenceItemRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
-import com.mercadopago.resources.preference.PreferencePayer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,30 +45,32 @@ public class OrdenServicioImpl implements OrdenServicio {
     private final EventoServicio eventoServicio;
     private final CuentaServicio cuentaServicio;
     private final EmailServicio emailServicio;
-    private  final EventoRepo eventoRepo;
+    private final EventoRepo eventoRepo;
 
+    /**
+     * Crea una nueva orden validando fechas, capacidad y límite de compra por usuario.
+     */
     @Override
     public String crearOrden(CrearOrdenDTO crearOrdenDTO) throws Exception {
         LocalDate fechaActual = LocalDate.now();
 
-
-        // Validar cada ítem antes de crear la orden
+        // Validar cada detalle de la orden antes de crearla
         for (DetalleOrden detalle : crearOrdenDTO.items()) {
             Evento evento = eventoServicio.obtenerEvento(detalle.getIdEvento());
 
-            // Validar fecha límite (2 días antes del evento)
+            // Validar que la compra se realice máximo 2 días antes del evento
             if (evento.getFechaEvento().minusDays(2).isBefore(fechaActual)) {
                 throw new Exception("La compra solo puede realizarse hasta dos días antes del evento: " + evento.getNombre());
             }
 
-            // Validar capacidad disponible por localidad
+            // Validar que haya capacidad disponible
             Localidad localidad = evento.obtenerLocalidad(detalle.getNombreLocalidad());
             if (localidad.getCapacidadDisponible() < detalle.getCantidad()) {
                 throw new Exception("No hay capacidad suficiente para la localidad " + detalle.getNombreLocalidad() +
                         " en el evento " + evento.getNombre());
             }
 
-            // Validar límite de boletas por usuario
+            // Verificar que no supere el límite de boletas por usuario
             int limiteBoletas = 5;
             int yaCompradas = calcularBoletasCompradas(crearOrdenDTO.idCliente(), detalle.getIdEvento());
             int nuevas = detalle.getCantidad();
@@ -81,7 +81,7 @@ public class OrdenServicioImpl implements OrdenServicio {
             }
         }
 
-        // Crear y configurar la orden
+        // Crear y guardar la nueva orden
         Orden nuevaOrden = new Orden();
         nuevaOrden.setIdCliente(crearOrdenDTO.idCliente());
         nuevaOrden.setFecha(fechaActual);
@@ -89,38 +89,34 @@ public class OrdenServicioImpl implements OrdenServicio {
         nuevaOrden.setItems(crearOrdenDTO.items());
         nuevaOrden.setTotal(crearOrdenDTO.total());
 
-        // Actualizar la cantidad de entradas vendidas en cada localidad
+        // Actualizar entradas vendidas en los eventos correspondientes
         for (DetalleOrden detalle : crearOrdenDTO.items()) {
             Evento evento = eventoServicio.obtenerEvento(detalle.getIdEvento());
             Localidad localidad = evento.obtenerLocalidad(detalle.getNombreLocalidad());
-
             localidad.setEntradasVendidas(localidad.getEntradasVendidas() + detalle.getCantidad());
-            eventoRepo.save(evento); // 💡 Guarda los cambios del evento
+            eventoRepo.save(evento);
         }
 
-        // Guardar la orden en la base de datos
+        // Guardar la orden en base de datos
         Orden ordenGuardada = ordenRepo.save(nuevaOrden);
 
-        // Enviar correo de confirmación con QR
+        // Enviar correo de confirmación al cliente con código QR
         InformacionCuentaDTO cuenta = cuentaServicio.obtenerInformacionCuenta(crearOrdenDTO.idCliente());
         EmailDTO emailDTO = new EmailDTO(
                 "Detalles de tu compra en EventosClick",
                 "Gracias por tu compra. Adjuntamos el código QR de tu orden y los detalles de la misma.",
                 cuenta.correo()
         );
-
         emailServicio.enviarCorreoConQr(emailDTO, ordenGuardada);
 
-        // Respuesta final
-        return "La orden ha sido creada con éxito y se ha enviado un correo con los detalles de la compra. - ID: "
-                + ordenGuardada.getId();
+        return "La orden ha sido creada con éxito y se ha enviado un correo con los detalles de la compra. - ID: " + ordenGuardada.getId();
     }
 
-
-
+    /**
+     * Calcula cuántas boletas ha comprado un usuario para un evento.
+     */
     int calcularBoletasCompradas(String idCliente, String idEvento) {
         List<Orden> ordenes = ordenRepo.buscarOrdenesPorClienteYEvento(idCliente, idEvento);
-
         return ordenes.stream()
                 .flatMap(orden -> orden.getItems().stream())
                 .filter(item -> item.getIdEvento().equals(idEvento))
@@ -128,108 +124,72 @@ public class OrdenServicioImpl implements OrdenServicio {
                 .sum();
     }
 
+    /**
+     * Actualiza la información de una orden existente.
+     */
     @Override
     public String actualizarOrden(EditarOrdenDTO editarOrdenDTO) throws Exception {
         Orden orden = obtenerOrden(editarOrdenDTO.id());
-
         orden.setItems(editarOrdenDTO.items());
-
         orden.setTotal(editarOrdenDTO.total());
         orden.setIdCliente(editarOrdenDTO.idCliente());
-
         orden.setIdCupon(editarOrdenDTO.idCupon());
-
         ordenRepo.save(orden);
         return "La orden ha sido actualizada con éxito.";
     }
 
-   /* @Override
+    /**
+     * Elimina una orden devolviendo la capacidad a los eventos correspondientes.
+     */
+    @Override
     public String eliminarOrden(String idOrden) throws Exception {
         Orden orden = obtenerOrden(idOrden);
+        if (orden == null) throw new Exception("La orden no existe.");
 
-        // Obtener el evento asociado para devolver la capacidad
-        Evento evento = eventoServicio.obtenerEvento(orden.getItems().get(0).getIdEvento());
+        InformacionCuentaDTO cuenta = cuentaServicio.obtenerInformacionCuenta(orden.getIdCliente());
+        if (cuenta == null) throw new Exception("No se encontró la cuenta del cliente.");
 
-        // Devolver la capacidad a las localidades
+        // Devolver capacidad de entradas a los eventos afectados
         for (DetalleOrden detalle : orden.getItems()) {
+            Evento evento = eventoServicio.obtenerEvento(detalle.getIdEvento());
             Localidad localidad = evento.obtenerLocalidad(detalle.getNombreLocalidad());
             localidad.setEntradasVendidas(localidad.getEntradasVendidas() - detalle.getCantidad());
         }
 
         ordenRepo.delete(orden);
-        return "La orden ha sido cancelada y la capacidad ha sido devuelta.";
-    }*/
-   @Override
-   public String eliminarOrden(String idOrden) throws Exception {
-       // Obtener la orden a partir del ID proporcionado
-       Orden orden = obtenerOrden(idOrden);
-       if (orden == null) {
-           throw new Exception("La orden no existe.");
-       }
+        return "La orden ha sido cancelada, las boletas han sido eliminadas y la capacidad ha sido devuelta.";
+    }
 
-       // Obtener la cuenta del cliente que realizó la orden
-       InformacionCuentaDTO cuenta = cuentaServicio.obtenerInformacionCuenta(orden.getIdCliente());
-       if (cuenta == null) {
-           throw new Exception("No se encontró la cuenta del cliente.");
-       }
-
-
-
-       // Devolver la capacidad a las localidades y buscar las boletas que corresponden a esta orden
-       for (DetalleOrden detalle : orden.getItems()) {
-           Evento evento = eventoServicio.obtenerEvento(detalle.getIdEvento());
-           if (evento == null) {
-               throw new Exception("Evento no encontrado para el detalle: " + detalle.getIdEvento());
-           }
-
-           Localidad localidad = evento.obtenerLocalidad(detalle.getNombreLocalidad());
-           if (localidad == null) {
-               throw new Exception("Localidad no encontrada: " + detalle.getNombreLocalidad());
-           }
-
-           // Devolver la capacidad a la localidad
-           localidad.setEntradasVendidas(localidad.getEntradasVendidas() - detalle.getCantidad());
-           //Hacer logica para devolver capacidad
-           //eventoServicio.editarEvento(evento)
-
-
-
-       }
-
-       // Finalmente, eliminar la orden de la base de datos
-       ordenRepo.delete(orden);
-
-       return "La orden ha sido cancelada, las boletas han sido eliminadas y la capacidad ha sido devuelta.";
-   }
-
-
-
+    /**
+     * Busca todas las órdenes realizadas por un cliente.
+     */
     @Override
     public List<Orden> buscarOrdenesPorCliente(String idCliente) throws Exception {
         return ordenRepo.buscarOrdenesPorCliente(idCliente);
     }
 
+    /**
+     * Retorna las órdenes dentro de un rango de fechas específico.
+     */
     @Override
     public List<Orden> buscarOrdenesPorRangoDeFechas(String fechaInicio, String fechaFin) throws Exception {
-
-        SimpleDateFormat parser=new SimpleDateFormat("yyyy-MM-dd");
-        Date dateOne=new Date();
-        Date dateTwo=new Date();
+        SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateOne, dateTwo;
         try {
-            dateOne=parser.parse(fechaInicio);
-            dateTwo=parser.parse(fechaFin);
-        }catch (ParseException e) {
-            e.printStackTrace();
-        }
-        if(dateOne.before(dateTwo)){
-            return ordenRepo.buscarOrdenesPorRangoDeFechas(dateOne, dateTwo);
-        }else{
-            List<Orden> ordenList = new ArrayList<>();
-            return ordenList;
+            dateOne = parser.parse(fechaInicio);
+            dateTwo = parser.parse(fechaFin);
+        } catch (ParseException e) {
+            throw new Exception("Error al parsear las fechas.");
         }
 
+        return dateOne.before(dateTwo)
+                ? ordenRepo.buscarOrdenesPorRangoDeFechas(dateOne, dateTwo)
+                : new ArrayList<>();
     }
 
+    /**
+     * Devuelve información detallada de una orden.
+     */
     @Override
     public InformacionOrdenDTO obtenerInformacionOrden(String idOrden) throws Exception {
         Orden orden = obtenerOrden(idOrden);
@@ -242,10 +202,12 @@ public class OrdenServicioImpl implements OrdenServicio {
         );
     }
 
+    /**
+     * Lista todas las órdenes registradas en el sistema.
+     */
     @Override
     public List<InformacionOrdenDTO> listarTodasLasOrdenes() throws Exception {
-        List<Orden> ordenes = ordenRepo.findAll();
-        return ordenes.stream()
+        return ordenRepo.findAll().stream()
                 .map(orden -> new InformacionOrdenDTO(
                         orden.getId(),
                         orden.getIdCliente(),
@@ -255,149 +217,101 @@ public class OrdenServicioImpl implements OrdenServicio {
                 .collect(Collectors.toList());
     }
 
-//    @Override
-//    public List<InformacionOrdenDTO> listarOrdenesPorCliente(String idCliente) throws Exception {
-//        List<Orden> ordenes = ordenRepo.buscarOrdenesPorCliente(idCliente);
-//        return ordenes.stream()
-//                .map(orden -> new InformacionOrdenDTO(
-//                        orden.getId(),
-//                        orden.getIdCliente(),
-//                        orden.getFecha(),
-//                        orden.getTotal(),
-//                        orden.getItems()))
-//                .collect(Collectors.toList());
-//    }
-
+    /**
+     * Crea una preferencia de pago en MercadoPago para una orden existente.
+     */
     @Override
     public Preference realizarPago(String idOrden) throws Exception {
-
-
-        // Obtener la orden guardada en la base de datos y los ítems de la orden
         Orden ordenGuardada = obtenerOrden(idOrden);
         List<PreferenceItemRequest> itemsPasarela = new ArrayList<>();
 
-
-        // Recorrer los items de la orden y crea los ítems de la pasarela
-        for(DetalleOrden item : ordenGuardada.getItems()){
-
-            //System.out.println();
-
-            // Obtener el evento y la localidad del ítem
-            Evento evento = eventoServicio.obtenerEvento(item.getIdEvento().toString());
+        // Construir los ítems que se enviarán a MercadoPago
+        for (DetalleOrden item : ordenGuardada.getItems()) {
+            Evento evento = eventoServicio.obtenerEvento(item.getIdEvento());
             Localidad localidad = evento.obtenerLocalidad(item.getNombreLocalidad());
 
-
-            // Crear el item de la pasarela
-            PreferenceItemRequest itemRequest =
-                    PreferenceItemRequest.builder()
-                            .id(evento.getId())
-                            .title(evento.getNombre())
-                            .pictureUrl(evento.getImagenPortada())
-                            .categoryId(evento.getTipo().name())
-                            .quantity(item.getCantidad())
-                            .currencyId("COP")
-                            .unitPrice(BigDecimal.valueOf(localidad.getPrecio()))
-                            .build();
-
+            PreferenceItemRequest itemRequest = PreferenceItemRequest.builder()
+                    .id(evento.getId())
+                    .title(evento.getNombre())
+                    .pictureUrl(evento.getImagenPortada())
+                    .categoryId(evento.getTipo().name())
+                    .quantity(item.getCantidad())
+                    .currencyId("COP")
+                    .unitPrice(BigDecimal.valueOf(localidad.getPrecio()))
+                    .build();
 
             itemsPasarela.add(itemRequest);
         }
 
-
-        // Configurar las credenciales de MercadoPago
+        // Configurar credenciales de MercadoPago
         MercadoPagoConfig.setAccessToken("APP_USR-5411335358313717-100712-ffe7d21472d9eb2733d13ab9a0cdc24e-2028101571");
-        //MercadoPagoConfig.setAccessToken("TEST-2041365706896992-100723-da66d1c65e7a6589364b7bcf2117e10a-1615533331");
 
-
-        // 👤 Configurar el comprador (payer)
+        // Configurar datos del comprador
         PreferencePayerRequest payer = PreferencePayerRequest.builder()
                 .name("Comprador")
                 .surname("Sandbox")
-                .email("test_user_4853470745469862009@testuser.com") // 👈 Usa el correo de tu usuario sandbox comprador
+                .email("test_user_4853470745469862009@testuser.com")
                 .build();
 
-        // Configurar las urls de retorno de la pasarela (Frontend)
+        // Configurar URLs de retorno
         PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                //.success("https://www.tu-sitio/success")
                 .success("https://app-fronted-eventosclick.web.app/pago-exitoso")
                 .failure("https://app-fronted-eventosclick.web.app/pago-fallido")
                 .pending("https://app-fronted-eventosclick.web.app/pago-pendiente")
                 .build();
 
-
-        // Construir la preferencia de la pasarela con los ítems, metadatos y urls de retorno
+        // Construir la preferencia con metadatos y URL de notificación
         PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                 .backUrls(backUrls)
                 .payer(payer)
                 .items(itemsPasarela)
                 .metadata(Map.of("id_orden", ordenGuardada.getId()))
-                .notificationUrl("https://76773d1be309.ngrok-free.app/api/general/notificacion-pago")//URL TOMADA DEL NGROK
+                .notificationUrl("https://76773d1be309.ngrok-free.app/api/general/notificacion-pago")
                 .autoReturn("approved")
                 .build();
 
-
-        // Crear la preferencia en la pasarela de MercadoPago
-        PreferenceClient client = new PreferenceClient();
-        Preference preference = client.create(preferenceRequest);
-
-
-        // Guardar el código de la pasarela en la orden
-        ordenGuardada.setCodigoPasarela( preference.getId() );
-      //  System.out.println(ordenGuardada.getPago().toString());
+        // Crear la preferencia y guardar el código en la orden
+        Preference preference = new PreferenceClient().create(preferenceRequest);
+        ordenGuardada.setCodigoPasarela(preference.getId());
         ordenRepo.save(ordenGuardada);
-        //System.out.println(1);
-
 
         return preference;
     }
 
+    /**
+     * Recibe y procesa notificaciones de MercadoPago para registrar pagos.
+     */
     @Override
     public void recibirNotificacionMercadoPago(Map<String, Object> request) {
         try {
-
-
-            // Obtener el tipo de notificación
             Object tipo = request.get("type");
 
-
-            // Si la notificación es de un pago entonces obtener el pago y la orden asociada
+            // Si la notificación corresponde a un pago, procesarlo
             if ("payment".equals(tipo)) {
-
-
-                // Capturamos el JSON que viene en el request y lo convertimos a un String
                 String input = request.get("data").toString();
-
-
-                // Extraemos los números de la cadena, es decir, el id del pago
                 String idPago = input.replaceAll("\\D+", "");
 
+                Payment payment = new PaymentClient().get(Long.parseLong(idPago));
 
-                // Se crea el cliente de MercadoPago y se obtiene el pago con el id
-                PaymentClient client = new PaymentClient();
-                Payment payment = client.get( Long.parseLong(idPago) );
-
-
-                // Obtener el id de la orden asociada al pago que viene en los metadatos
                 String idOrden = payment.getMetadata().get("id_orden").toString();
 
-
-                // Se obtiene la orden guardada en la base de datos y se le asigna el pago
                 Orden orden = obtenerOrden(idOrden);
                 Pago pago = crearPago(payment);
                 orden.setPago(pago);
                 ordenRepo.save(orden);
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Convierte la información del pago de MercadoPago a un objeto Pago del dominio.
+     */
     private Pago crearPago(Payment payment) {
         Pago pago = new Pago();
         pago.setIdPago(payment.getId().toString());
-        pago.setFecha( payment.getDateCreated().toLocalDateTime() );
+        pago.setFecha(payment.getDateCreated().toLocalDateTime());
         pago.setEstado(payment.getStatus());
         pago.setDetalleEstado(payment.getStatusDetail());
         pago.setTipoPago(payment.getPaymentTypeId());
@@ -407,25 +321,25 @@ public class OrdenServicioImpl implements OrdenServicio {
         return pago;
     }
 
-
+    /**
+     * Busca una orden por su ID, lanzando excepción si no existe.
+     */
     private Orden obtenerOrden(String idOrden) throws Exception {
-
-        Optional<Orden> ordenOptional = ordenRepo.findById(idOrden);
-        if (ordenOptional.isEmpty()) {
-            throw new Exception("No se encontró una orden con el ID " + idOrden);
-        }
-        return ordenOptional.get();
+        return ordenRepo.findById(idOrden)
+                .orElseThrow(() -> new Exception("No se encontró una orden con el ID " + idOrden));
     }
+
+    /**
+     * Obtiene el historial de órdenes de un cliente.
+     */
     @Override
     public List<InformacionOrdenDTO> obtenerHistorialOrdenes(String idCliente) throws Exception {
-        // Verificar si el cliente tiene órdenes
         List<Orden> ordenesCliente = ordenRepo.buscarOrdenesPorCliente(idCliente);
 
         if (ordenesCliente.isEmpty()) {
             throw new Exception("No se encontraron órdenes para el cliente con ID " + idCliente);
         }
 
-        // Mapear las órdenes a objetos DTO para el historial
         return ordenesCliente.stream()
                 .map(orden -> new InformacionOrdenDTO(
                         orden.getId(),

@@ -17,27 +17,37 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Implementación del servicio {@link CarritoServicio}.
+ *
+ * Se encarga de la gestión completa del carrito de compras de un usuario:
+ * agregar, editar, eliminar, vaciar y obtener la información del carrito.
+ */
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class CarritoServicioImpl implements CarritoServicio {
-
-
-
 
     @Autowired
     private final CarritoRepo carritoRepo;
 
     private final CuentaRepo cuentaRepo;
 
-
+    /**
+     * Elimina un ítem del carrito según su identificador.
+     *
+     * @param idCarrito identificador del carrito.
+     * @param idDetalleCarrito identificador del ítem dentro del carrito.
+     * @return mensaje de confirmación si la eliminación fue exitosa.
+     * @throws Exception si el carrito o el ítem no existen.
+     */
     @Override
     public String eliminarItem(String idCarrito, String idDetalleCarrito) throws Exception {
-
         Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
         if (carrito.isEmpty()) {
             throw new Exception("Carrito no encontrado");
         }
+
         Optional<DetalleCarrito> detalleCarrito = carrito.get().getItems().stream()
                 .filter(x -> x.getIdDetalleCarrito().equals(idDetalleCarrito))
                 .findFirst();
@@ -45,58 +55,57 @@ public class CarritoServicioImpl implements CarritoServicio {
         if (detalleCarrito.isEmpty()) {
             throw new Exception("Detalle del carrito no encontrado");
         }
+
         carrito.get().getItems().remove(detalleCarrito.get());
         carritoRepo.save(carrito.get());
         return "Item eliminado correctamente";
     }
 
-    //    public String eliminarItem(String idCarrito, String idDetalleCarrito) throws Exception {
-//
-//        Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
-//
-//        if(carrito.isPresent()){
-//            Optional<DetalleCarrito> detalleCarrito = carrito.get().getItems().stream().filter(x -> x.getIdDetalleCarrito().equals(idDetalleCarrito) ).findFirst();
-//            if(detalleCarrito.isPresent()){
-//                carrito.get().getItems().remove(detalleCarrito.get());
-//                carritoRepo.save(carrito.get());
-//
-//                return "Item eliminado correctamente";
-//            }
-//        }
-//        return "Item no ha sido eliminado correctamente";
-//    }
+    /**
+     * Agrega un ítem al carrito. Si el ítem ya existe, incrementa su cantidad.
+     *
+     * @param idCarrito identificador del carrito.
+     * @param item objeto {@link DetalleCarritoDTO} con la información del ítem.
+     * @throws Exception si el carrito no se encuentra.
+     */
     @Override
     public void agregarItem(String idCarrito, DetalleCarritoDTO item) throws Exception {
-       Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
+        Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
 
-        if(carrito.isPresent()){
+        if (carrito.isPresent()) {
             Carrito carritoActual = carrito.get();
 
-            // Verificar si el item ya está en el carrito
             Optional<DetalleCarrito> itemExistente = carritoActual.getItems().stream()
                     .filter(i -> i.getIdEvento().equals(item.idEvento()))
                     .findFirst();
 
             if (itemExistente.isPresent()) {
-                // Si el item ya existe, incrementar la cantidad
                 DetalleCarrito detalleExistente = itemExistente.get();
                 detalleExistente.setCantidad(detalleExistente.getCantidad() + item.cantidad());
             } else {
-                // Si el item no existe, agregarlo al carrito
                 DetalleCarrito detalleCarrito = new DetalleCarrito();
                 detalleCarrito.setIdDetalleCarrito(item.idDetalleCarrito());
                 detalleCarrito.setCantidad(item.cantidad());
                 detalleCarrito.setIdEvento(item.idEvento());
                 detalleCarrito.setNombreLocalidad(item.nombreLocalidad());
                 detalleCarrito.setPrecioUnitario(item.precioUnitario());
-
-
                 carritoActual.getItems().add(detalleCarrito);
             }
-            // Guardar el carrito actualizado en la base de datos
-            carritoRepo.save(carrito.get());
+
+            carritoRepo.save(carritoActual);
+        } else {
+            throw new Exception("Carrito no encontrado");
         }
     }
+
+    /**
+     * Agrega un ítem único al carrito del cliente. Si el mismo evento y localidad existen,
+     * incrementa la cantidad en lugar de duplicarlo.
+     *
+     * @param idCuenta identificador del cliente.
+     * @param item objeto {@link DetalleCarritoDTO} con la información del ítem.
+     * @throws Exception si el carrito del cliente no se encuentra.
+     */
     @Override
     public void agregarItemUnico(String idCuenta, DetalleCarritoDTO item) throws Exception {
         Optional<Carrito> carritoOpt = carritoRepo.buscarCarritoPorIdUsuario(idCuenta);
@@ -107,18 +116,15 @@ public class CarritoServicioImpl implements CarritoServicio {
 
         Carrito carrito = carritoOpt.get();
 
-        // Buscar si el mismo evento y localidad ya existen en el carrito
         Optional<DetalleCarrito> itemExistente = carrito.getItems().stream()
                 .filter(i -> i.getIdEvento().equals(item.idEvento()) &&
                         i.getNombreLocalidad().equalsIgnoreCase(item.nombreLocalidad()))
                 .findFirst();
 
         if (itemExistente.isPresent()) {
-            // Si ya existe, se incrementa la cantidad
             DetalleCarrito detalleExistente = itemExistente.get();
             detalleExistente.setCantidad(detalleExistente.getCantidad() + item.cantidad());
         } else {
-            // Si no existe, se crea un nuevo detalle de carrito
             DetalleCarrito nuevoItem = new DetalleCarrito();
             nuevoItem.setIdDetalleCarrito(item.idDetalleCarrito());
             nuevoItem.setIdEvento(item.idEvento());
@@ -126,15 +132,19 @@ public class CarritoServicioImpl implements CarritoServicio {
             nuevoItem.setCantidad(item.cantidad());
             nuevoItem.setPrecioUnitario(item.precioUnitario());
             nuevoItem.setSillasSeleccionadas(new ArrayList<>(item.sillasSeleccionadas()));
-
             carrito.getItems().add(nuevoItem);
         }
 
-        // Guardar el carrito actualizado
         carritoRepo.save(carrito);
     }
 
-
+    /**
+     * Edita los detalles de un ítem existente en el carrito.
+     *
+     * @param idCarrito identificador del carrito.
+     * @param item objeto {@link DetalleCarritoDTO} con los nuevos datos del ítem.
+     * @throws Exception si el carrito o el ítem no existen.
+     */
     @Override
     public void editarItem(String idCarrito, DetalleCarritoDTO item) throws Exception {
         Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
@@ -142,20 +152,15 @@ public class CarritoServicioImpl implements CarritoServicio {
         if (carrito.isPresent()) {
             Carrito carritoActual = carrito.get();
 
-            // Buscar el item que se desea editar en el carrito
             Optional<DetalleCarrito> itemExistente = carritoActual.getItems().stream()
                     .filter(i -> i.getIdEvento().equals(item.idEvento()))
                     .findFirst();
 
             if (itemExistente.isPresent()) {
-                // Si el item existe, actualizar los detalles
                 DetalleCarrito detalleExistente = itemExistente.get();
                 detalleExistente.setCantidad(item.cantidad());
                 detalleExistente.setNombreLocalidad(item.nombreLocalidad());
                 detalleExistente.setPrecioUnitario(item.precioUnitario());
-                // Actualizar otros campos de detalleExistente según sea necesario
-
-                // Guardar el carrito actualizado en la base de datos
                 carritoRepo.save(carritoActual);
             } else {
                 throw new Exception("Item no encontrado en el carrito");
@@ -163,29 +168,38 @@ public class CarritoServicioImpl implements CarritoServicio {
         } else {
             throw new Exception("Carrito no encontrado");
         }
-
     }
 
+    /**
+     * Obtiene la información detallada de un carrito por su ID.
+     *
+     * @param idCarrito identificador del carrito.
+     * @return objeto {@link InformacionCarritoDTO} con los datos del carrito.
+     * @throws Exception si el carrito no se encuentra.
+     */
     @Override
     public InformacionCarritoDTO traerCarrito(String idCarrito) throws Exception {
-
         Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
 
-        if(carrito.isPresent()){
+        if (carrito.isPresent()) {
             Carrito carritodto = carrito.get();
             return new InformacionCarritoDTO(
                     carritodto.getFecha(),
                     convertirADetalleCarritoDTO(carritodto.getItems()),
                     carritodto.getId(),
                     carritodto.getIdUsuario()
-
             );
-
-        }else {
-            throw  new Exception("No se ha encontrado un carrito");
+        } else {
+            throw new Exception("No se ha encontrado un carrito");
         }
-
     }
+
+    /**
+     * Convierte una lista de entidades {@link DetalleCarrito} en una lista de {@link DetalleCarritoDTO}.
+     *
+     * @param lista lista de entidades del carrito.
+     * @return lista equivalente en formato DTO.
+     */
     public List<DetalleCarritoDTO> convertirADetalleCarritoDTO(List<DetalleCarrito> lista) {
         return lista.stream()
                 .map(detalle -> new DetalleCarritoDTO(
@@ -199,42 +213,46 @@ public class CarritoServicioImpl implements CarritoServicio {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Obtiene el carrito asociado a un cliente.
+     *
+     * @param idCuenta identificador del cliente.
+     * @return información del carrito del cliente.
+     * @throws Exception si el carrito no se encuentra.
+     */
     @Override
-    public InformacionCarritoDTO traerCarritoCliente(String idCuenta) throws  Exception{
+    public InformacionCarritoDTO traerCarritoCliente(String idCuenta) throws Exception {
         Optional<Carrito> carrito = carritoRepo.buscarCarritoPorIdUsuario(idCuenta);
 
-        if(carrito.isPresent()){
+        if (carrito.isPresent()) {
             Carrito carritodto = carrito.get();
             return new InformacionCarritoDTO(
                     carritodto.getFecha(),
                     convertirADetalleCarritoDTO(carritodto.getItems()),
                     carritodto.getId(),
                     carritodto.getIdUsuario()
-
             );
-        }else {
-            throw  new Exception("No se ha encontrado un carrito");
+        } else {
+            throw new Exception("No se ha encontrado un carrito");
         }
-
     }
 
+    /**
+     * Vacía completamente el carrito, eliminando todos sus ítems.
+     *
+     * @param idCarrito identificador del carrito.
+     * @throws Exception si el carrito no se encuentra.
+     */
     @Override
     public void vaciarCarrito(String idCarrito) throws Exception {
         Optional<Carrito> carrito = carritoRepo.findById(idCarrito);
 
         if (carrito.isPresent()) {
             Carrito carritoActual = carrito.get();
-
-            // Vaciar la lista de ítems del carrito
             carritoActual.getItems().clear();
-
-            // Guardar el carrito actualizado en la base de datos
             carritoRepo.save(carritoActual);
         } else {
             throw new Exception("Carrito no encontrado");
         }
     }
-
-
-
 }

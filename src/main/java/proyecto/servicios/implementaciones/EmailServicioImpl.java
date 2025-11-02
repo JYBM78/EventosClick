@@ -1,7 +1,5 @@
 package proyecto.servicios.implementaciones;
 
-
-
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
@@ -17,10 +15,8 @@ import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import org.springframework.beans.factory.annotation.Value;
-
 import org.simplejavamail.api.mailer.Mailer;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
-import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.MailerBuilder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -35,19 +31,41 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-
+/**
+ * Implementación del servicio {@link EmailServicio}.
+ *
+ * Esta clase se encarga de gestionar el envío de correos electrónicos mediante
+ * la API de SendGrid. Soporta:
+ * <ul>
+ *     <li>Envío de correos de texto plano</li>
+ *     <li>Envío de correos en formato HTML</li>
+ *     <li>Envío de correos con código QR adjunto</li>
+ * </ul>
+ *
+ * Se utiliza la anotación {@code @Async} para ejecutar los envíos de forma asíncrona,
+ * evitando bloquear el hilo principal.
+ */
 @Service
 public class EmailServicioImpl implements EmailServicio {
-    // 📧 Credenciales SendGrid
+
+    /** Dirección de correo usada como remitente principal. */
     private static final String REMITENTE = "eventosclickuni@gmail.com";
+
+    /** API key de SendGrid, inyectada desde el archivo de configuración. */
     @Value("${sendgrid_api_key}")
-    private   String SENDGRID_API_KEY;
+    private String SENDGRID_API_KEY;
+
+    /** Host y puerto SMTP de SendGrid. */
     private static final String SENDGRID_HOST = "smtp.sendgrid.net";
     private static final int SENDGRID_PORT = 587;
 
-    // 🔹 Construir y configurar el mailer de SendGrid
+    /**
+     * Construye y configura un {@link Mailer} con las credenciales de SendGrid.
+     * Este método puede utilizarse para enviar correos usando SimpleJavaMail si se desea.
+     *
+     * @return objeto {@link Mailer} configurado.
+     */
     private Mailer buildMailer() {
         return MailerBuilder
                 .withSMTPServer(SENDGRID_HOST, SENDGRID_PORT, "apikey", SENDGRID_API_KEY)
@@ -60,6 +78,12 @@ public class EmailServicioImpl implements EmailServicio {
     // ================ MÉTODOS DE ENVÍO DE CORREOS ===============
     // ============================================================
 
+    /**
+     * Envía un correo de texto plano utilizando la API de SendGrid.
+     *
+     * @param emailDTO objeto con los datos del correo (asunto, cuerpo, destinatario).
+     * @throws IOException si ocurre un error al enviar el correo.
+     */
     @Override
     @Async
     public void enviarCorreo(EmailDTO emailDTO) throws IOException {
@@ -89,6 +113,12 @@ public class EmailServicioImpl implements EmailServicio {
         }
     }
 
+    /**
+     * Envía un correo en formato HTML.
+     *
+     * @param emailDTO datos del correo (asunto, cuerpo HTML, destinatario).
+     * @throws Exception si ocurre un error al comunicarse con la API de SendGrid.
+     */
     @Override
     @Async
     public void enviarCorreoHtml(EmailDTO emailDTO) throws Exception {
@@ -102,6 +132,14 @@ public class EmailServicioImpl implements EmailServicio {
         enviarMailConSendGrid(mail);
     }
 
+    /**
+     * Envía un correo con un código QR adjunto. El QR contiene la información de una orden,
+     * como ID, cliente, fecha, total y sillas asignadas.
+     *
+     * @param emailDTO datos del correo (asunto, cuerpo, destinatario).
+     * @param orden objeto {@link Orden} del cual se generará el QR.
+     * @throws Exception si ocurre un error durante la generación del QR o el envío del correo.
+     */
     @Override
     @Async
     public void enviarCorreoConQr(EmailDTO emailDTO, Orden orden) throws Exception {
@@ -132,6 +170,14 @@ public class EmailServicioImpl implements EmailServicio {
 
         enviarMailConSendGrid(mail);
     }
+
+    /**
+     * Envía un objeto {@link Mail} ya configurado mediante la API de SendGrid.
+     * Método de apoyo utilizado por los demás tipos de envío.
+     *
+     * @param mail correo a enviar.
+     * @throws IOException si ocurre un error en la comunicación con SendGrid.
+     */
     private void enviarMailConSendGrid(Mail mail) throws IOException {
         SendGrid sg = new SendGrid(SENDGRID_API_KEY);
         Request request = new Request();
@@ -149,46 +195,13 @@ public class EmailServicioImpl implements EmailServicio {
         }
     }
 
-//    @Override
-//    @Async
-//    public void enviarCorreoHtml(EmailDTO emailDTO) throws Exception {
-//        Email email = EmailBuilder.startingBlank()
-//                .from("EventosClick", REMITENTE)
-//                .to(emailDTO.destinatario())
-//                .withSubject(emailDTO.asunto())
-//                .appendTextHTML(emailDTO.cuerpo())
-//                .buildEmail();
-//
-//        try (Mailer mailer = buildMailer()) {
-//            mailer.sendMail(email);
-//        }
-//    }
-
-//    @Override
-//    @Async
-//    public void enviarCorreoConQr(EmailDTO emailDTO, Orden orden) throws Exception {
-//        // 🔹 Generar contenido y QR
-//        String contenidoQr = generarContenidoQr(orden);
-//        ByteArrayOutputStream qrStream = new ByteArrayOutputStream();
-//
-//        generarImagenQr(contenidoQr,qrStream);
-//
-//        // 🔹 Crear correo con el QR adjunto
-//        Email email = EmailBuilder.startingBlank()
-//                .from("EventosClick", REMITENTE)
-//                .to(emailDTO.destinatario())
-//                .withSubject(emailDTO.asunto())
-//                .withPlainText(emailDTO.cuerpo())
-//                .withAttachment("codigo_qr.png", qrStream.toByteArray(), "image/png")
-//                .buildEmail();
-//
-//        // 🔹 Enviar correo
-//        try (Mailer mailer = buildMailer()) {
-//            mailer.sendMail(email);
-//        }
-//    }
-
-    // Método para generar el contenido del QR a partir de la orden
+    /**
+     * Genera el contenido textual que se incluirá dentro del código QR
+     * con base en la información de una orden.
+     *
+     * @param orden objeto {@link Orden} con los datos de compra.
+     * @return texto plano que representará los datos dentro del QR.
+     */
     private String generarContenidoQr(Orden orden) {
         StringBuilder sb = new StringBuilder();
 
@@ -210,8 +223,14 @@ public class EmailServicioImpl implements EmailServicio {
         return sb.toString();
     }
 
-
-    // Método para generar la imagen del QR
+    /**
+     * Genera una imagen QR en formato PNG a partir de un texto.
+     *
+     * @param contenido texto a codificar en el QR.
+     * @param outputStream flujo de salida donde se escribirá la imagen.
+     * @throws WriterException si ocurre un error durante la generación del código QR.
+     * @throws IOException si ocurre un error al escribir la imagen.
+     */
     private void generarImagenQr(String contenido, ByteArrayOutputStream outputStream) throws WriterException, IOException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         Map<EncodeHintType, Object> hints = new HashMap<>();
@@ -221,6 +240,4 @@ public class EmailServicioImpl implements EmailServicio {
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         ImageIO.write(qrImage, "png", outputStream);
     }
-
-
 }
