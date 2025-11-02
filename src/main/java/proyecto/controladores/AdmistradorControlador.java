@@ -1,8 +1,6 @@
 package proyecto.controladores;
 
-
 import proyecto.modelo.documentos.Evento;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +19,11 @@ import proyecto.servicios.interfaces.ImagenesServicio;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador para la gestión de recursos administrativos.
+ * Permite administrar eventos, órdenes e imágenes.
+ * Todas las rutas están protegidas para usuarios con rol ADMINISTRADOR.
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
@@ -30,61 +33,102 @@ public class AdmistradorControlador {
     private final ImagenesServicio imagenesServicio;
     private final OrdenServicioImpl ordenServicio;
 
-    //Orden
+    /**
+     * Busca órdenes dentro de un rango de fechas específico.
+     * @param d1 fecha inicial (formato esperado: yyyy-MM-dd)
+     * @param d2 fecha final (formato esperado: yyyy-MM-dd)
+     * @return lista de órdenes encontradas entre esas fechas
+     */
     @GetMapping("/obtener-ordenes-rango-fecha-orden/{dateOne}/{dateTwo}")
-    public ResponseEntity<MensajeDTO<List<Orden>>> buscarOrdenesPorRangoDeFechas(@PathVariable("dateOne")String d1, @PathVariable("dateTwo")String d2) throws Exception {
-        List<Orden> ordenesClientes = ordenServicio.buscarOrdenesPorRangoDeFechas(d1,d2);
+    public ResponseEntity<MensajeDTO<List<Orden>>> buscarOrdenesPorRangoDeFechas(
+            @PathVariable("dateOne") String d1,
+            @PathVariable("dateTwo") String d2) throws Exception {
+        List<Orden> ordenesClientes = ordenServicio.buscarOrdenesPorRangoDeFechas(d1, d2);
         return ResponseEntity.ok(new MensajeDTO<>(false, ordenesClientes));
     }
+
+    /**
+     * Obtiene la información de un evento por su identificador.
+     * @param id identificador del evento
+     * @return objeto Evento con su información
+     */
     @GetMapping("/obtener-evento/{id}")
     public ResponseEntity<MensajeDTO<Evento>> obtenerEvento(@PathVariable String id) throws Exception {
         Evento evento = eventoServicio.obtenerEvento(id);
         return ResponseEntity.ok(new MensajeDTO<>(false, evento));
     }
+
+    /**
+     * Devuelve la lista completa de órdenes registradas en el sistema.
+     * @return lista de órdenes
+     */
     @GetMapping("/obtener-ordenes-orden")
     public ResponseEntity<MensajeDTO<List<InformacionOrdenDTO>>> buscarOrdenes() throws Exception {
         List<InformacionOrdenDTO> ordenesCliente = ordenServicio.listarTodasLasOrdenes();
         return ResponseEntity.ok(new MensajeDTO<>(false, ordenesCliente));
     }
 
-    //Evento
-
+    /**
+     * Lista todos los eventos disponibles para el administrador.
+     * @return lista con información detallada de cada evento
+     */
     @GetMapping("/listar-todos-eventos-admin")
     public ResponseEntity<MensajeDTO<List<InformacionEventoDTO>>> listarEventos() throws Exception {
         List<InformacionEventoDTO> lista = eventoServicio.listarEventosAdmin();
         return ResponseEntity.ok(new MensajeDTO<>(false, lista));
     }
+
+    /**
+     * Crea un nuevo evento con los datos proporcionados.
+     * @param evento datos del evento a crear
+     * @return mensaje de éxito
+     */
     @PostMapping("/crear-evento")
-    public ResponseEntity<MensajeDTO<String>> crearEvento(@Valid @RequestBody CrearEventoDTO evento) throws Exception{
+    public ResponseEntity<MensajeDTO<String>> crearEvento(@Valid @RequestBody CrearEventoDTO evento) throws Exception {
         eventoServicio.crearEvento(evento);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Evento creado exitosamente"));
     }
 
+    /**
+     * Edita la información de un evento existente.
+     * @param evento datos actualizados del evento
+     * @return mensaje de éxito
+     */
     @PutMapping("/editar-evento")
-    public ResponseEntity<MensajeDTO<String>> editarEvento(@Valid @RequestBody EditarEventoDTO evento) throws Exception{
+    public ResponseEntity<MensajeDTO<String>> editarEvento(@Valid @RequestBody EditarEventoDTO evento) throws Exception {
         eventoServicio.editarEvento(evento);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Evento editado exitosamente"));
     }
 
+    /**
+     * Elimina un evento identificado por su id.
+     * @param id identificador del evento a eliminar
+     * @return mensaje confirmando la eliminación
+     */
     @DeleteMapping("/eliminar-evento/{id}")
-    public ResponseEntity<MensajeDTO<String>> eliminarEvento(@PathVariable String id) throws Exception{
-
+    public ResponseEntity<MensajeDTO<String>> eliminarEvento(@PathVariable String id) throws Exception {
         return ResponseEntity.ok(new MensajeDTO<>(false, eventoServicio.eliminarEvento(id)));
     }
 
-    //ORGANIZAR
+    /**
+     * Sube una imagen al servidor o servicio de almacenamiento.
+     * @param imagen archivo de imagen recibido desde el cliente
+     * @return mapa con la información del archivo subido (por ejemplo URL e ID)
+     */
     @PostMapping("/subir")
-    public ResponseEntity<MensajeDTO<Map>> subir(@RequestParam("imagen") MultipartFile imagen) throws Exception{
+    public ResponseEntity<MensajeDTO<Map>> subir(@RequestParam("imagen") MultipartFile imagen) throws Exception {
         Map respuesta = imagenesServicio.subirImagen(imagen);
-        return ResponseEntity.ok().body(new MensajeDTO<Map>(false, respuesta));
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, respuesta));
     }
 
+    /**
+     * Elimina una imagen previamente subida según su identificador.
+     * @param idImagen identificador de la imagen a eliminar
+     * @return mensaje confirmando la eliminación
+     */
     @DeleteMapping("/eliminar")
-    public ResponseEntity<MensajeDTO<String>> eliminar(@RequestParam("idImagen") String idImagen)  throws Exception{
-        imagenesServicio.eliminarImagen( idImagen );
+    public ResponseEntity<MensajeDTO<String>> eliminar(@RequestParam("idImagen") String idImagen) throws Exception {
+        imagenesServicio.eliminarImagen(idImagen);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, "La imagen fue eliminada correctamente"));
     }
-
-
-
 }

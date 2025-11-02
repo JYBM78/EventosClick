@@ -1,6 +1,5 @@
 package proyecto.config;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -19,85 +18,117 @@ import proyecto.modelo.enums.Rol;
 
 import java.io.IOException;
 
-
+/**
+ * Filtro personalizado que intercepta todas las solicitudes HTTP
+ * para validar el token JWT antes de permitir el acceso a los recursos protegidos.
+ *
+ * Este filtro:
+ *
+ *   Configura las cabeceras CORS necesarias.
+ *   Extrae y valida el token JWT enviado en el encabezado {@code Authorization}.
+ *   Permite o bloquea el acceso según el rol del usuario y la ruta solicitada.
+ *
+ *
+ * Extiende {@link OncePerRequestFilter}, por lo que se ejecuta una sola vez
+ * por cada petición HTTP.
+ */
 @Component
 @RequiredArgsConstructor
 public class FiltroToken extends OncePerRequestFilter {
 
-
+    /** Utilidad para manejo y validación de tokens JWT. */
     private final JWTUtils jwtUtils;
 
+    /**
+     * Método principal del filtro: se ejecuta antes de procesar cada solicitud.
+     *
+     * @param request  petición HTTP entrante
+     * @param response respuesta HTTP saliente
+     * @param filterChain cadena de filtros para continuar el flujo de ejecución
+     * @throws ServletException en caso de error del contenedor
+     * @throws IOException en caso de error de entrada/salida
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-
-        // Configuración de cabeceras para CORS
+        // --- Configuración de cabeceras CORS ---
         response.addHeader("Access-Control-Allow-Origin", "*");
         response.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         response.addHeader("Access-Control-Allow-Headers", "Origin, Accept, Content-Type, Authorization");
 
-
+        // Las solicitudes OPTIONS (preflight) se responden sin validar el token
         if (request.getMethod().equals("OPTIONS")) {
             response.setStatus(HttpServletResponse.SC_OK);
-        }else {
+        } else {
 
-
-            //Obtener la URI de la petición que se está realizando
+            // URI del recurso solicitado
             String requestURI = request.getRequestURI();
 
-
-            //Se obtiene el token de la petición del encabezado del mensaje HTTP
+            // Token JWT obtenido del encabezado Authorization
             String token = getToken(request);
             boolean error = true;
 
-
             try {
-
-                //Si la petición es para la ruta /api/cliente se verifica que el token exista y que el rol sea CLIENTE
+                // Validación de permisos según la ruta y el rol
                 if (requestURI.startsWith("/api/cliente")) {
                     error = validarToken(token, Rol.CLIENTE);
-                }else if (requestURI.startsWith("/api/admin")){
+                } else if (requestURI.startsWith("/api/admin")) {
                     error = validarToken(token, Rol.ADMINISTRADOR);
-                }else{
+                } else {
+                    // Rutas públicas o no restringidas
                     error = false;
                 }
 
-                //Si hay un error se crea una respuesta con el mensaje del error
-                if(error){
-                    crearRespuestaError("No tiene permisos para acceder a este recurso", HttpServletResponse.SC_FORBIDDEN, response);
+                // Si hay error de permisos, se devuelve respuesta 403
+                if (error) {
+                    crearRespuestaError("No tiene permisos para acceder a este recurso",
+                            HttpServletResponse.SC_FORBIDDEN, response);
                 }
 
-
             } catch (MalformedJwtException | SignatureException e) {
-                crearRespuestaError("El token es incorrecto", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+                crearRespuestaError("El token es incorrecto",
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
             } catch (ExpiredJwtException e) {
-                crearRespuestaError("El token está vencido", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+                crearRespuestaError("El token está vencido",
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
             } catch (Exception e) {
-                crearRespuestaError(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+                crearRespuestaError(e.getMessage(),
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
             }
 
-
-            //Si no hay errores se continúa con la petición
+            // Si no hay errores, se continúa con el flujo normal del request
             if (!error) {
                 filterChain.doFilter(request, response);
             }
         }
-
-
     }
 
+    /**
+     * Extrae el token JWT del encabezado "Authorization" de la solicitud.
+     *
+     * @param req petición HTTP
+     * @return el token JWT sin el prefijo "Bearer ", o {@code null} si no existe
+     */
     private String getToken(HttpServletRequest req) {
         String header = req.getHeader("Authorization");
-        return header != null && header.startsWith("Bearer ") ? header.replace("Bearer ", "") : null;
+        return header != null && header.startsWith("Bearer ")
+                ? header.replace("Bearer ", "")
+                : null;
     }
 
-
+    /**
+     * Crea y envía una respuesta JSON con un mensaje de error personalizado.
+     *
+     * @param mensaje mensaje descriptivo del error
+     * @param codigoError código HTTP que se devolverá
+     * @param response objeto de respuesta HTTP
+     * @throws IOException si ocurre un error al escribir la respuesta
+     */
     private void crearRespuestaError(String mensaje, int codigoError, HttpServletResponse response) throws IOException {
         MensajeDTO<String> dto = new MensajeDTO<>(true, mensaje);
-
 
         response.setContentType("application/json");
         response.setStatus(codigoError);
@@ -106,18 +137,26 @@ public class FiltroToken extends OncePerRequestFilter {
         response.getWriter().close();
     }
 
-
-    private boolean validarToken(String token, Rol rol){
+    /**
+     * Valida un token JWT verificando que sea válido y que el rol coincida con el esperado.
+     *
+     * @param token token JWT a validar
+     * @param rol rol esperado (CLIENTE o ADMINISTRADOR)
+     * @return {@code true} si hay error o el token no es válido; {@code false} si el token es correcto
+     */
+    private boolean validarToken(String token, Rol rol) {
         boolean error = true;
+
         if (token != null) {
+            // Se analiza y valida el token JWT
             Jws<Claims> jws = jwtUtils.parseJwt(token);
+
+            // Verifica que el rol contenido en el token coincida con el rol esperado
             if (Rol.valueOf(jws.getPayload().get("rol").toString()) == rol) {
                 error = false;
             }
         }
+
         return error;
     }
-
 }
-
-
