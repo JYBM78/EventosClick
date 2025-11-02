@@ -8,11 +8,13 @@ import proyecto.modelo.dto.evento.*;
 import proyecto.modelo.enums.EstadoEvento;
 import proyecto.modelo.enums.TipoEvento;
 import proyecto.modelo.vo.Localidad;
+import proyecto.modelo.vo.Silla;
 import proyecto.repositorios.EventoRepo;
 import proyecto.servicios.interfaces.EventoServicio;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,13 +38,27 @@ public class EventoServicioImpl implements EventoServicio {
                     crearEventoDTO.nombre() + " para la fecha " + crearEventoDTO.fechaEvento());
         }
 
+        //  Convertir las localidades del DTO a entidades, generando sillas automáticamente
         List<Localidad> localidades = crearEventoDTO.localidades()
                 .stream()
-                .map(localidadDTO -> new Localidad(
-                        localidadDTO.precio(),
-                        localidadDTO.nombre(),
-                        localidadDTO.capacidadMaxima())
-                )
+                .map(localidadDTO -> {
+                    Localidad localidad = new Localidad();
+                    localidad.setNombre(localidadDTO.nombre());
+                    localidad.setPrecio(localidadDTO.precio());
+                    localidad.setCapacidadMaxima(localidadDTO.capacidadMaxima());
+                    //localidad.setCapacidadDisponible(localidadDTO.capacidadMaxima());
+                    localidad.setEntradasVendidas(0);
+
+                    // Generar las sillas para esta localidad
+                    List<Silla> sillas = new ArrayList<>();
+                    for (int i = 1; i <= localidadDTO.capacidadMaxima(); i++) {
+                        // Ejemplo de nombre: S1, S2, S3...
+                        sillas.add(new Silla("S" + i, true));
+                    }
+                    localidad.setSillas(sillas);
+
+                    return localidad;
+                })
                 .collect(Collectors.toList());
 
         Evento nuevoEvento = new Evento();
