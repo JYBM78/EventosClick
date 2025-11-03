@@ -216,7 +216,7 @@ public class CuentaServicioImpl implements CuentaServicio {
             throw new Exception("La contraseña es incorrecta");
         }
 
-        if (cuenta.getEstado() != EstadoCuenta.ACTIVO) {
+        if (cuenta.getEstado() != EstadoCuenta.ACTIVO || cuenta.getEstado() != EstadoCuenta.ELIMINADO ) {
             cuenta.setEstado(EstadoCuenta.ACTIVO);
             cuentaRepo.save(cuenta);
         }
