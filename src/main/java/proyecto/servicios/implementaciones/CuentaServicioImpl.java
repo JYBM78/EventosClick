@@ -219,7 +219,7 @@ public class CuentaServicioImpl implements CuentaServicio {
 
             cuenta.setEstado(EstadoCuenta.ACTIVO);
             cuentaRepo.save(cuenta);
-        
+
 
         Map<String, Object> map = construirClaims(cuenta);
         return new TokenDTO(jwtUtils.generarToken(cuenta.getEmail(), map));

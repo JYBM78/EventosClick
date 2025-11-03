@@ -31,4 +31,6 @@ steps:
           --allow-unauthenticated \
           --set-env-vars "MONGO_URI=$MONGO_URI,PORT=8080"
 
-
+# === Configuración de logs y opciones ===
+options:
+  logging: CLOUD_LOGGING_ONLY
