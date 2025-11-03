@@ -17,7 +17,7 @@ steps:
         'southamerica-east1-docker.pkg.dev/$PROJECT_ID/eventosclick-repo/eventosclick-backend:$COMMIT_SHA'
       ]
 
-  # 3) Obtener el secreto de MongoDB y desplegar en Cloud Run
+  # 3) Desplegar en Cloud Run con variables de entorno
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
@@ -29,4 +29,6 @@ steps:
           --region "southamerica-east1" \
           --platform managed \
           --allow-unauthenticated \
-          --set-env-vars "MONGO_URI=$MONGO_URI"
+          --set-env-vars "MONGO_URI=$MONGO_URI,PORT=8080"
+
+
