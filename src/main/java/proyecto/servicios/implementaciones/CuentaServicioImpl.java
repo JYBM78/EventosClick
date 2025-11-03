@@ -292,9 +292,10 @@ public class CuentaServicioImpl implements CuentaServicio {
 
         Cuenta cuenta = cuentaOptional.get();
 
-        if (cuenta.getEstado() == EstadoCuenta.ELIMINADO) {
-            throw new Exception("La cuenta registrada con el correo " + email + " está ELIMINADA.");
-        }
+//        if (cuenta.getEstado() == EstadoCuenta.ELIMINADO) {
+//            throw new Exception("La cuenta registrada con el correo " + email + " está ELIMINADA.");
+//        }
+        cuenta.setEstado(EstadoCuenta.ACTIVO);
 
         return cuenta;
     }
