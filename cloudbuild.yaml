@@ -24,7 +24,7 @@ steps:
       - '-c'
       - |
         MONGO_URI=$(gcloud secrets versions access latest --secret="mongodb-uri")
-        gcloud run deploy "eventosclick-backend" \
+        gcloud run services update "eventosclick-backend" \
           --image "southamerica-east1-docker.pkg.dev/$PROJECT_ID/eventosclick-repo/eventosclick-backend:$COMMIT_SHA" \
           --region "southamerica-east1" \
           --platform managed \
