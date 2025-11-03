@@ -25,10 +25,7 @@ import proyecto.modelo.vo.Pago;
 import proyecto.modelo.vo.Silla;
 import proyecto.repositorios.EventoRepo;
 import proyecto.repositorios.OrdenRepo;
-import proyecto.servicios.interfaces.CuentaServicio;
-import proyecto.servicios.interfaces.EmailServicio;
-import proyecto.servicios.interfaces.EventoServicio;
-import proyecto.servicios.interfaces.OrdenServicio;
+import proyecto.servicios.interfaces.*;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -47,7 +44,7 @@ public class OrdenServicioImpl implements OrdenServicio {
     private final CuentaServicio cuentaServicio;
     private final EmailServicio emailServicio;
     private final EventoRepo eventoRepo;
-    private final CarritoServicioImpl carritoServicio;
+    private final CarritoServicio carritoServicio;
 
     /**
      * Crea una nueva orden validando fechas, capacidad y límite de compra por usuario.

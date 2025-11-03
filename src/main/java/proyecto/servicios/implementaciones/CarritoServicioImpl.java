@@ -256,12 +256,15 @@ public class CarritoServicioImpl implements CarritoServicio {
         }
     }
 
+    @Override
     public void vaciarCarritoByIdCliente(String idCliente) throws Exception {
         Optional<Carrito> carrito = carritoRepo.buscarCarritoPorIdUsuario(idCliente);
 
         if (carrito.isPresent()) {
             Carrito carritoActual = carrito.get();
+            List<DetalleCarrito> items = new ArrayList<>();
             carritoActual.getItems().clear();
+            carritoActual.setItems(items);
             carritoRepo.save(carritoActual);
         } else {
             throw new Exception("Carrito no encontrado");

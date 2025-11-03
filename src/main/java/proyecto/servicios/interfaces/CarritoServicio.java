@@ -13,6 +13,8 @@ import proyecto.modelo.dto.carrito.InformacionCarritoDTO;
 @Service
 public interface CarritoServicio {
 
+     void vaciarCarritoByIdCliente(String idCliente) throws Exception;
+
     /**
      * Elimina un ítem específico del carrito.
      *
