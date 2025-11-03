@@ -47,6 +47,7 @@ public class OrdenServicioImpl implements OrdenServicio {
     private final CuentaServicio cuentaServicio;
     private final EmailServicio emailServicio;
     private final EventoRepo eventoRepo;
+    private final CarritoServicioImpl carritoServicio;
 
     /**
      * Crea una nueva orden validando fechas, capacidad y límite de compra por usuario.
@@ -127,6 +128,8 @@ public class OrdenServicioImpl implements OrdenServicio {
         // Guardar la orden en base de datos
         Orden ordenGuardada = ordenRepo.save(nuevaOrden);
 
+        //Se vacia el carrito despues de q ue la orden proceda.
+        carritoServicio.vaciarCarritoByIdCliente(crearOrdenDTO.idCliente());
         // Enviar correo de confirmación al cliente con código QR
         InformacionCuentaDTO cuenta = cuentaServicio.obtenerInformacionCuenta(crearOrdenDTO.idCliente());
         EmailDTO emailDTO = new EmailDTO(
