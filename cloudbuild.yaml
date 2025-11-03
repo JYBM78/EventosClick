@@ -5,7 +5,7 @@ steps:
       [
         'build',
         '-t',
-        'northamerica-northeast1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA',
+        'southamerica-east1-docker.pkg.dev/$PROJECT_ID/eventosclick-repo/eventosclick-backend:$COMMIT_SHA',
         '.'
       ]
 
@@ -14,7 +14,7 @@ steps:
     args:
       [
         'push',
-        'northamerica-northeast1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA'
+        'southamerica-east1-docker.pkg.dev/$PROJECT_ID/eventosclick-repo/eventosclick-backend:$COMMIT_SHA'
       ]
 
   # 3) Obtener el secreto de MongoDB y desplegar en Cloud Run
@@ -23,9 +23,9 @@ steps:
     args:
       - '-c'
       - |
-        MONGO_URI=$(gcloud secrets versions access latest --secret="mongo-uri")
+        MONGO_URI=$(gcloud secrets versions access latest --secret="mongodb-uri")
         gcloud run deploy "eventosclick-backend" \
-          --image "southamerica-east1-docker.pkg.dev/$PROJECT_ID/backend-repo/backend-image:$COMMIT_SHA" \
+          --image "southamerica-east1-docker.pkg.dev/$PROJECT_ID/eventosclick-repo/eventosclick-backend:$COMMIT_SHA" \
           --region "southamerica-east1" \
           --platform managed \
           --allow-unauthenticated \
