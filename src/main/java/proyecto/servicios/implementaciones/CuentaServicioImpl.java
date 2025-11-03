@@ -216,10 +216,8 @@ public class CuentaServicioImpl implements CuentaServicio {
             throw new Exception("La contraseña es incorrecta");
         }
 
-        if (cuenta.getEstado() != EstadoCuenta.ACTIVO) {
-            cuenta.setEstado(EstadoCuenta.ACTIVO);
-            cuentaRepo.save(cuenta);
-        }
+        cuenta.setEstado(EstadoCuenta.ACTIVO);
+        cuentaRepo.save(cuenta);
 
         Map<String, Object> map = construirClaims(cuenta);
         return new TokenDTO(jwtUtils.generarToken(cuenta.getEmail(), map));
