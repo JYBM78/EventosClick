@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
 
 # Render asigna el puerto como variable de entorno
-ENV PORT=8080
-EXPOSE ${PORT}
+#ENV PORT=8080
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
