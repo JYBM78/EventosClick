@@ -119,6 +119,24 @@ public class EventoServicioImpl implements EventoServicio {
         if (editarEventoDTO.fechaEvento().isBefore(LocalDate.now())) {
             throw new Exception("La nueva fecha ingresada para el evento debe ser mayor a la fecha actual");
         }
+        // 4️⃣ Reiniciar las sillas de cada localidad
+        List<Localidad> localidades = eventoModificado.getLocalidades();
+
+        if (localidades != null && !localidades.isEmpty()) {
+            for (Localidad localidad : localidades) {
+                // Reiniciar la lista de sillas
+                List<Silla> nuevasSillas = new ArrayList<>();
+
+                for (int i = 1; i <= localidad.getCapacidadMaxima(); i++) {
+                    // Se crean nuevas sillas disponibles
+                    nuevasSillas.add(new Silla("S" + i, true));
+                }
+
+                localidad.setSillas(nuevasSillas);
+                // Si manejas persistencia en cascada, esto basta;
+                // si no, deberías guardar las localidades explícitamente.
+            }
+        }
 
         eventoModificado.setNombre(editarEventoDTO.nombre());
         eventoModificado.setImagenPortada(editarEventoDTO.imagenPortada());
